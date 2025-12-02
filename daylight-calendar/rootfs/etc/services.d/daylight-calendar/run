@@ -7,6 +7,13 @@
 export PORT=8099
 export DISPLAY=:0
 
+# Check and log supervisor token availability (don't log the actual token)
+if [ -n "${SUPERVISOR_TOKEN}" ]; then
+  bashio::log.info "Supervisor token is available (length: ${#SUPERVISOR_TOKEN})"
+else
+  bashio::log.warning "Supervisor token is NOT available - API access may fail"
+fi
+
 # Run setup for X11 if in kiosk mode
 if bashio::config.true 'kiosk_mode'; then
   # Start X server

@@ -45,8 +45,17 @@ const hassApiUrl = isProduction
   ? 'http://supervisor/core/api' 
   : process.env.HASS_API_URL || 'http://localhost:8123/api';
 
+const supervisorToken = process.env.SUPERVISOR_TOKEN || process.env.HASS_TOKEN;
+
+// Log auth setup for debugging (only log presence, not actual token)
+console.log('[INFO] Authentication setup:');
+console.log(`[INFO] - Production mode: ${isProduction}`);
+console.log(`[INFO] - API URL: ${hassApiUrl}`);
+console.log(`[INFO] - Token present: ${!!supervisorToken}`);
+console.log(`[INFO] - Token length: ${supervisorToken ? supervisorToken.length : 0}`);
+
 const hassHeaders = {
-  Authorization: `Bearer ${process.env.SUPERVISOR_TOKEN || process.env.HASS_TOKEN}`,
+  Authorization: `Bearer ${supervisorToken}`,
   'Content-Type': 'application/json',
 };
 
@@ -708,8 +717,18 @@ app.post('/api/display-settings', (req, res) => {
 
 // Re-enable API routes with proper error handling that depend on Home Assistant
 app.get('/api/calendar', async (req, res) => {
+  // Check if we have authentication
+  if (!supervisorToken) {
+    console.error('[ERROR] No authentication token available for calendar API');
+    return res.status(500).json({ 
+      error: 'Authentication not configured', 
+      details: 'SUPERVISOR_TOKEN or HASS_TOKEN environment variable not set'
+    });
+  }
+  
   try {
     console.log(`[INFO] Fetching calendar data from: ${hassApiUrl}/calendars`);
+    console.log(`[INFO] Using token: ${supervisorToken.substring(0, 10)}...`);
     const response = await axios.get(`${hassApiUrl}/calendars`, { 
       headers: hassHeaders,
       timeout: 10000 // 10 second timeout
@@ -755,6 +774,15 @@ app.get('/api/weather', async (req, res) => {
   if (!config || !config.show_weather) {
     console.log('[INFO] Weather display is disabled in config.');
     return res.json({ enabled: false });
+  }
+  
+  // Check if we have authentication
+  if (!supervisorToken) {
+    console.error('[ERROR] No authentication token available for weather API');
+    return res.status(500).json({ 
+      error: 'Authentication not configured', 
+      details: 'SUPERVISOR_TOKEN or HASS_TOKEN environment variable not set'
+    });
   }
   
   try {
