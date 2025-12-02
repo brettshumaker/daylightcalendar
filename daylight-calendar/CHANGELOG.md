@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.7.2-alpha-10] - 2025-12-02
+
+- **Fixed profile saving** - Implemented actual API calls to save user profiles (was just simulation before)
+- **Fixed profile creation** - Added missing "Add Profile" button click handler
+- **Fixed profile deletion** - Implemented actual API call to delete profiles
+- Profile changes now properly persist to `/api/users` endpoints
+- Added POST /api/users for creating new profiles
+- Added PUT /api/users/:id for updating existing profiles
+- Added DELETE /api/users/:id for deleting profiles
+- User toggles reload after profile save/delete to keep calendar in sync
+
 ## [1.1.7.2-alpha-9] - 2025-12-02
 
 - **Fixed weather forecast API call** - Corrected REST API structure (flat, not nested target/data)

@@ -2094,24 +2094,49 @@ document.addEventListener('DOMContentLoaded', function() {
     editProfileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      const profileId = document.getElementById('profile-id').value;
       const profileData = {
-        id: document.getElementById('profile-id').value,
         name: document.getElementById('profile-name').value,
         color: document.getElementById('profile-color').value,
         icon: document.getElementById('profile-icon').value,
-        photo: document.getElementById('profile-photo-data').value,
+        photo: document.getElementById('profile-photo-data').value || null,
         gameTimeLimit: parseInt(document.getElementById('profile-game-time-limit').value, 10)
       };
       
       try {
-        // Simulation - this would save to the server in a real app
-        console.log('Saving profile:', profileData);
+        let response;
+        
+        if (profileId) {
+          // Update existing profile
+          console.log('Updating profile:', profileId, profileData);
+          response = await fetch(`/api/users/${profileId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profileData)
+          });
+        } else {
+          // Create new profile
+          console.log('Creating new profile:', profileData);
+          response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profileData)
+          });
+        }
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save profile: ${response.statusText}`);
+        }
+        
+        const savedProfile = await response.json();
+        console.log('Profile saved successfully:', savedProfile);
         
         // Close modal
         editProfileModal.classList.remove('show');
         
         // Reload profiles
         loadProfilesForSettings();
+        loadUserToggles(); // Also reload user toggles for calendar
       } catch (error) {
         console.error('Error saving profile:', error);
         alert('Failed to save profile: ' + error.message);
@@ -2128,19 +2153,37 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (confirm('Are you sure you want to delete this profile? This cannot be undone.')) {
         try {
-          // Simulation - this would delete from the server in a real app
           console.log('Deleting profile:', profileId);
+          
+          const response = await fetch(`/api/users/${profileId}`, {
+            method: 'DELETE'
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to delete profile: ${response.statusText}`);
+          }
+          
+          console.log('Profile deleted successfully');
           
           // Close modal
           editProfileModal.classList.remove('show');
           
           // Reload profiles
           loadProfilesForSettings();
+          loadUserToggles(); // Also reload user toggles for calendar
         } catch (error) {
           console.error('Error deleting profile:', error);
           alert('Failed to delete profile: ' + error.message);
         }
       }
+    });
+  }
+  
+  // Add profile button
+  const addProfileButton = document.getElementById('add-profile-button');
+  if (addProfileButton) {
+    addProfileButton.addEventListener('click', () => {
+      openProfileEdit(null); // Pass null to create new profile
     });
   }
   
