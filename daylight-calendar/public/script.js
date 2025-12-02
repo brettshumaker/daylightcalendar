@@ -391,17 +391,44 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateTime() {
     const now = new Date();
     
-    // Format time based on configuration
+    // Format time based on configuration (24h format for large display)
     let timeFormat = 'h:mm A';
+    let largeTimeFormat = 'HH:mm';
     if (appConfig.time_format === '24h') {
       timeFormat = 'HH:mm';
+      largeTimeFormat = 'HH:mm';
+    } else {
+      largeTimeFormat = 'h:mm';
     }
     
-    const timeStr = moment(now).format(timeFormat);
-    const dateStr = moment(now).format('dddd, MMMM D, Y');
+    // Update new 3-column header elements
+    const dayOfWeekEl = document.getElementById('day-of-week');
+    const fullDateEl = document.getElementById('full-date');
+    const largeTimeEl = document.getElementById('large-time');
     
-    document.getElementById('current-time').textContent = timeStr;
-    document.getElementById('current-date').textContent = dateStr;
+    if (dayOfWeekEl) {
+      dayOfWeekEl.textContent = moment(now).format('dddd');
+    }
+    
+    if (fullDateEl) {
+      fullDateEl.textContent = moment(now).format('MMMM DD, YYYY');
+    }
+    
+    if (largeTimeEl) {
+      largeTimeEl.textContent = moment(now).format(largeTimeFormat);
+    }
+    
+    // Keep old elements for backward compatibility
+    const oldTimeEl = document.getElementById('current-time');
+    const oldDateEl = document.getElementById('current-date');
+    
+    if (oldTimeEl) {
+      oldTimeEl.textContent = moment(now).format(timeFormat);
+    }
+    
+    if (oldDateEl) {
+      oldDateEl.textContent = moment(now).format('dddd, MMMM D, Y');
+    }
     
     setTimeout(updateTime, 1000);
   }
@@ -512,6 +539,11 @@ document.addEventListener('DOMContentLoaded', function() {
           windEl.querySelector('span').textContent = windText;
         }
         
+        // Display forecast if available
+        if (attrs.forecast && Array.isArray(attrs.forecast)) {
+          displayForecast(attrs.forecast);
+        }
+        
         // Keep the old last updated for compatibility
         let lastUpdated = document.querySelector('.weather .last-updated');
         if (!lastUpdated) {
@@ -525,6 +557,76 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(error => {
         console.error('Error fetching weather data:', error);
       });
+  }
+  
+  // Display weather forecast
+  function displayForecast(forecast) {
+    const forecastContainer = document.getElementById('forecast-days');
+    if (!forecastContainer || !forecast || forecast.length === 0) return;
+    
+    // Clear existing forecast
+    forecastContainer.innerHTML = '';
+    
+    // Map weather conditions to icons
+    const iconMap = {
+      'clear-night': 'fa-moon',
+      'cloudy': 'fa-cloud',
+      'fog': 'fa-smog',
+      'hail': 'fa-cloud-meatball',
+      'lightning': 'fa-bolt',
+      'lightning-rainy': 'fa-bolt',
+      'partlycloudy': 'fa-cloud-sun',
+      'pouring': 'fa-cloud-showers-heavy',
+      'rainy': 'fa-cloud-rain',
+      'snowy': 'fa-snowflake',
+      'snowy-rainy': 'fa-cloud-sleet',
+      'sunny': 'fa-sun',
+      'windy': 'fa-wind',
+      'windy-variant': 'fa-wind',
+      'exceptional': 'fa-exclamation-triangle'
+    };
+    
+    // Show next 5 days (or fewer if less available)
+    const daysToShow = Math.min(5, forecast.length);
+    
+    for (let i = 0; i < daysToShow; i++) {
+      const day = forecast[i];
+      const forecastDate = new Date(day.datetime);
+      const dayName = forecastDate.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      const forecastDay = document.createElement('div');
+      forecastDay.className = 'forecast-day';
+      
+      // Day name
+      const dayNameEl = document.createElement('div');
+      dayNameEl.className = 'forecast-day-name';
+      dayNameEl.textContent = i === 0 ? 'Today' : dayName;
+      
+      // Weather icon
+      const iconEl = document.createElement('i');
+      iconEl.className = `fas ${iconMap[day.condition] || 'fa-cloud'} forecast-icon`;
+      
+      // Temperatures
+      const tempsEl = document.createElement('div');
+      tempsEl.className = 'forecast-temps';
+      
+      const highEl = document.createElement('div');
+      highEl.className = 'forecast-high';
+      highEl.textContent = day.temperature ? `${Math.round(day.temperature)}°` : '--';
+      
+      const lowEl = document.createElement('div');
+      lowEl.className = 'forecast-low';
+      lowEl.textContent = day.templow ? `${Math.round(day.templow)}°` : '--';
+      
+      tempsEl.appendChild(highEl);
+      tempsEl.appendChild(lowEl);
+      
+      forecastDay.appendChild(dayNameEl);
+      forecastDay.appendChild(iconEl);
+      forecastDay.appendChild(tempsEl);
+      
+      forecastContainer.appendChild(forecastDay);
+    }
   }
   
   // Update theme

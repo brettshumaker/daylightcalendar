@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.7.2-alpha-5] - 2025-12-02
+
+- Redesigned header to match dashboard YAML 3-column layout
+- Left column: Day of week, full date, large time display (like better-moment-card)
+- Center column: Large weather icon with humidity, pressure, sunrise/sunset details
+- Right column: Current temperature with 5-day forecast display
+- Added forecast cards showing next 5 days with icons and high/low temps
+- Improved responsive design with single-column layout on mobile
+- Enhanced date/time formatting to match LLLL format
+
 ## [1.1.7.2-alpha-4] - 2025-12-02
 
 - Enhanced weather widget UI with detailed information

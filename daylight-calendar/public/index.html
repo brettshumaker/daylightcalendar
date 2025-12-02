@@ -54,40 +54,49 @@
     <div id="main-content-area">
       <div id="calendar-content" class="tab-content active-content">
         <header>
-          <div class="date-time">
-            <h1 id="current-time">--:--</h1>
-            <h2 id="current-date">Loading...</h2>
+          <!-- Left: Date & Time -->
+          <div class="date-time-section">
+            <div class="day-of-week" id="day-of-week">Monday</div>
+            <div class="full-date" id="full-date">December 02, 2025</div>
+            <div class="large-time" id="large-time">14:50</div>
           </div>
-          <div class="weather-widget" id="weather-container">
-            <div class="weather-main">
-              <div class="weather-icon">
-                <i class="fas fa-cloud" id="weather-icon"></i>
+          
+          <!-- Center: Current Weather -->
+          <div class="weather-current" id="weather-container">
+            <div class="weather-icon-large">
+              <i class="fas fa-cloud" id="weather-icon"></i>
+            </div>
+            <div class="weather-current-details">
+              <div class="weather-detail">
+                <i class="fas fa-tint"></i>
+                <span id="weather-humidity">--</span>
               </div>
-              <div class="weather-details">
-                <div class="weather-detail">
-                  <i class="fas fa-tint"></i>
-                  <span id="weather-humidity">--</span>
-                </div>
-                <div class="weather-detail">
-                  <i class="fas fa-tachometer-alt"></i>
-                  <span id="weather-pressure">--</span>
-                </div>
-                <div class="weather-detail">
-                  <i class="fas fa-sunrise"></i>
-                  <span id="weather-sunrise">--</span>
-                </div>
-                <div class="weather-detail">
-                  <i class="fas fa-sunset"></i>
-                  <span id="weather-sunset">--</span>
-                </div>
+              <div class="weather-detail">
+                <i class="fas fa-tachometer-alt"></i>
+                <span id="weather-pressure">--</span>
+              </div>
+              <div class="weather-detail">
+                <i class="fas fa-sunrise"></i>
+                <span id="weather-sunrise">--</span>
+              </div>
+              <div class="weather-detail">
+                <i class="fas fa-sunset"></i>
+                <span id="weather-sunset">--</span>
               </div>
             </div>
-            <div class="weather-temp-section">
-              <div class="weather-temp" id="weather-temp">--°</div>
-              <div class="weather-condition-text" id="weather-condition-text">--</div>
-              <div class="weather-wind" id="weather-wind">
+          </div>
+          
+          <!-- Right: Temperature & Forecast -->
+          <div class="weather-forecast-section">
+            <div class="current-temp-large">
+              <div class="temp-value" id="weather-temp">--°</div>
+              <div class="temp-condition" id="weather-condition-text">--</div>
+              <div class="temp-wind" id="weather-wind">
                 <i class="fas fa-wind"></i> <span>--</span>
               </div>
+            </div>
+            <div class="forecast-days" id="forecast-days">
+              <!-- 5-day forecast will be populated by JS -->
             </div>
           </div>
         </header>

@@ -278,48 +278,60 @@ body, html {
   transform: translateY(-1px);
 }
 
+/* Header - 3 Column Layout matching dashboard YAML */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
   background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
+  align-items: center;
 }
 
-.date-time h1 {
-  font-size: 3rem;
-  margin: 0;
-  font-weight: 300;
+/* Left Column - Date & Time (like better-moment-card) */
+.date-time-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: center;
+  line-height: normal;
 }
 
-.date-time h2 {
-  font-size: 1.5rem;
-  margin: 0;
+.day-of-week {
+  font-size: 1em;
   font-weight: 400;
+  color: var(--text-color);
   opacity: 0.8;
 }
 
-/* Enhanced Weather Widget */
-.weather-widget {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
+.full-date {
+  font-size: 1.5em;
+  font-weight: 400;
+  color: var(--text-color);
 }
 
-.weather-main {
+.large-time {
+  font-size: 4em;
+  font-weight: 400;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+/* Center Column - Current Weather (like custom:weather-card) */
+.weather-current {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
 }
 
-.weather-icon {
-  font-size: 4rem;
+.weather-icon-large {
+  font-size: 5rem;
   color: var(--primary-color);
 }
 
-.weather-details {
+.weather-current-details {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem 1.5rem;
@@ -342,39 +354,94 @@ header {
   text-align: center;
 }
 
-.weather-temp-section {
+/* Right Column - Temperature & Forecast (like weather-forecast) */
+.weather-forecast-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.current-temp-large {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
-  margin-left: auto;
+  gap: 0.25rem;
 }
 
-.weather-temp {
+.temp-value {
   font-size: 3.5rem;
   font-weight: 200;
   line-height: 1;
   color: var(--text-color);
 }
 
-.weather-condition-text {
-  font-size: 1.1rem;
+.temp-condition {
+  font-size: 1rem;
   color: var(--text-color);
   opacity: 0.7;
   text-transform: capitalize;
 }
 
-.weather-wind {
+.temp-wind {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-color);
   opacity: 0.7;
 }
 
-.weather-wind i {
-  font-size: 1rem;
+.temp-wind i {
+  font-size: 0.9rem;
+}
+
+/* 5-Day Forecast Display */
+.forecast-days {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.forecast-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  min-width: 60px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.forecast-day-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.forecast-icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.forecast-temps {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.forecast-high {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.forecast-low {
+  color: var(--text-color);
+  opacity: 0.6;
 }
 
 main {
@@ -507,32 +574,45 @@ footer {
 @media (max-width: 768px) {
   header {
     padding: 0.5rem 1rem;
-  }
-  
-  .date-time h1 {
-    font-size: 2rem;
-  }
-  
-  .date-time h2 {
-    font-size: 1rem;
-  }
-  
-  .weather-widget {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
   
-  .weather-icon {
-    font-size: 3rem;
+  .date-time-section {
+    order: 1;
   }
   
-  .weather-temp {
+  .large-time {
+    font-size: 3em;
+  }
+  
+  .full-date {
+    font-size: 1.2em;
+  }
+  
+  .weather-current {
+    order: 2;
+  }
+  
+  .weather-icon-large {
+    font-size: 3.5rem;
+  }
+  
+  .weather-forecast-section {
+    order: 3;
+    align-items: center;
+  }
+  
+  .current-temp-large {
+    align-items: center;
+  }
+  
+  .temp-value {
     font-size: 2.5rem;
   }
   
-  .weather-temp-section {
-    align-items: center;
-    margin-left: 0;
+  .forecast-days {
+    justify-content: center;
   }
   
   main {
