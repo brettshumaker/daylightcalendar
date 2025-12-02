@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.7.2-alpha-1] - 2025-12-02
+
+- Fixing 401s
+
 ## [1.1.7.2-alpha] - 2025-12-02
 
 - Testing some changes
