@@ -100,12 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const categories = await response.json();
       
       // Add options for each category
-      categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category.name.toLowerCase();
-        option.textContent = category.name;
-        mealTypeSelect.appendChild(option);
-      });
+      if (Array.isArray(categories)) {
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.name.toLowerCase();
+          option.textContent = category.name;
+          mealTypeSelect.appendChild(option);
+        });
+      }
       
       // Set a default selection if available
       if (mealTypeSelect.options.length > 0) {
@@ -294,17 +296,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add events from all calendars
         let allEvents = [];
-        calendars.forEach(cal => {
-          if (cal.events) {
-            allEvents = allEvents.concat(cal.events.map(event => ({
-              title: event.summary,
-              start: event.start.dateTime || event.start.date,
-              end: event.end.dateTime || event.end.date,
-              allDay: !event.start.dateTime,
-              backgroundColor: cal.backgroundColor || '#4285f4'
-            })));
-          }
-        });
+        if (Array.isArray(calendars)) {
+          calendars.forEach(cal => {
+            if (cal.events) {
+              allEvents = allEvents.concat(cal.events.map(event => ({
+                title: event.summary,
+                start: event.start.dateTime || event.start.date,
+                end: event.end.dateTime || event.end.date,
+                allDay: !event.start.dateTime,
+                backgroundColor: cal.backgroundColor || '#4285f4'
+              })));
+            }
+          });
+        }
         
         // Add events to calendar
         calendar.addEventSource(allEvents);
@@ -327,29 +331,31 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(users => {
         userToggles.innerHTML = '';
         
-        users.forEach(user => {
-          const toggle = document.createElement('div');
-          toggle.className = 'user-toggle active';
-          toggle.dataset.user = user.name;
-          toggle.style.backgroundColor = user.color;
-          
-          if (user.icon) {
-            toggle.innerHTML = `<i class="fas ${user.icon}"></i>`;
-          } else {
-            toggle.textContent = user.name.charAt(0);
-          }
-          
-          toggle.addEventListener('click', () => {
-            toggle.classList.toggle('active');
-            toggle.classList.toggle('inactive');
+        if (Array.isArray(users)) {
+          users.forEach(user => {
+            const toggle = document.createElement('div');
+            toggle.className = 'user-toggle active';
+            toggle.dataset.user = user.name;
+            toggle.style.backgroundColor = user.color;
             
-            // In a real app, this would filter calendar events
-            // For now, we'll just show a message
-            console.log(`Toggle ${user.name}'s events: ${toggle.classList.contains('active') ? 'shown' : 'hidden'}`);
+            if (user.icon) {
+              toggle.innerHTML = `<i class="fas ${user.icon}"></i>`;
+            } else {
+              toggle.textContent = user.name.charAt(0);
+            }
+            
+            toggle.addEventListener('click', () => {
+              toggle.classList.toggle('active');
+              toggle.classList.toggle('inactive');
+              
+              // In a real app, this would filter calendar events
+              // For now, we'll just show a message
+              console.log(`Toggle ${user.name}'s events: ${toggle.classList.contains('active') ? 'shown' : 'hidden'}`);
+            });
+            
+            userToggles.appendChild(toggle);
           });
-          
-          userToggles.appendChild(toggle);
-        });
+        }
       })
       .catch(error => {
         console.error('Error loading user toggles:', error);
@@ -407,10 +413,11 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/weather')
       .then(response => response.json())
       .then(data => {
-        if (data.enabled === false) return;
+        if (!data || data.enabled === false) return;
+        if (!data.attributes) return;
         
-        const temp = Math.round(data.attributes.temperature);
-        const condition = data.attributes.condition;
+        const temp = data.attributes.temperature ? Math.round(data.attributes.temperature) : '--';
+        const condition = data.attributes.condition || 'unknown';
         
         const tempEl = document.querySelector('.weather .temp');
         const conditionEl = document.querySelector('.weather .condition i');
@@ -561,6 +568,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       choreBoard.innerHTML = ''; // Clear previous content
+      
+      // Ensure chores is an array
+      if (!Array.isArray(chores)) {
+        console.error('Chores data is not an array:', chores);
+        choreBoard.innerHTML = '<div class="error-message">No chores to display</div>';
+        return;
+      }
       
       // Group chores by assignee
       const choresByAssignee = {};
@@ -792,6 +806,12 @@ document.addEventListener('DOMContentLoaded', function() {
         cell.classList.remove('has-meal');
       });
       
+      // Ensure mealDays is an array
+      if (!Array.isArray(mealDays)) {
+        console.error('Meal data is not an array:', mealDays);
+        return;
+      }
+      
       // Fill in meals for the current week
       mealDays.forEach(day => {
         const mealDate = moment(day.date);
@@ -865,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const response = await fetch('/api/meal-categories');
       if (response.ok) {
         const categories = await response.json();
-        if (categories && categories.length > 0) {
+        if (Array.isArray(categories) && categories.length > 0) {
           mealTypes = categories.map(cat => cat.name.toLowerCase());
         }
       }
@@ -1634,6 +1654,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (profileListSettings) {
         profileListSettings.innerHTML = '';
         
+        if (!Array.isArray(users)) {
+          console.error('Users data is not an array:', users);
+          profileListSettings.innerHTML = '<div class="error-message">Failed to load profiles</div>';
+          return;
+        }
+        
         users.forEach(user => {
           const profileItem = document.createElement('div');
           profileItem.className = 'profile-item-settings';
@@ -2355,6 +2381,12 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (profileList) {
         profileList.innerHTML = '';
+        
+        if (!Array.isArray(users)) {
+          console.error('Users data is not an array:', users);
+          profileList.innerHTML = '<div class="error-message">Failed to load profiles</div>';
+          return;
+        }
         
         users.forEach(user => {
           const profileItem = document.createElement('div');

@@ -73,62 +73,56 @@ const initializeDataFile = (filename, defaultData) => {
   }
 };
 
-// Initialize default data files only in dev mode or on first run
-if (!isProduction) {
-  // Default chores (dev only)
-  initializeDataFile('chores.json', [
-    {
-      id: "dev-1",
-      name: "Example Chore (Dev Only)",
-      assigneeName: "Developer",
-      dueDate: "2024-05-20",
-      completed: false,
-      rewardPoints: 10
-    }
-  ]);
-  
-  // Default users (dev only)
-  initializeDataFile('users.json', [
-    {
-      id: "dev-1",
-      name: "Developer",
-      color: "#4285f4",
-      icon: "fa-user"
-    }
-  ]);
-  
-  // Default meal categories (dev only)
-  initializeDataFile('meal-categories.json', [
-    {
-      id: "dev-1",
-      name: "Breakfast",
-      color: "#4285f4",
-      icon: "fa-coffee"
-    },
-    {
-      id: "dev-2",
-      name: "Lunch",
-      color: "#34a853",
-      icon: "fa-hamburger"
-    },
-    {
-      id: "dev-3",
-      name: "Dinner", 
-      color: "#fbbc05",
-      icon: "fa-utensils"
-    }
-  ]);
-  
-  // Initialize display settings with defaults
-  initializeDataFile('display-settings.json', {
-    autoNightMode: true,
-    nightModeStart: "20:00",
-    nightModeEnd: "07:00",
-    screenBurnProtection: true,
-    dimAfterMinutes: 10,
-    displayClock: false
-  });
-}
+// Initialize default data files for all environments
+// These files are required for the app to function properly
+initializeDataFile('chores.json', []);
+
+// Default users - needed for calendar display and chore assignment
+initializeDataFile('users.json', [
+  {
+    id: "dev-1",
+    name: "Developer",
+    color: "#4285f4",
+    icon: "fa-user"
+  }
+]);
+
+// Default meal categories
+initializeDataFile('meal-categories.json', [
+  {
+    id: "1",
+    name: "Breakfast",
+    color: "#4285f4",
+    icon: "fa-coffee"
+  },
+  {
+    id: "2",
+    name: "Lunch",
+    color: "#34a853",
+    icon: "fa-hamburger"
+  },
+  {
+    id: "3",
+    name: "Dinner", 
+    color: "#fbbc05",
+    icon: "fa-utensils"
+  }
+]);
+
+// Initialize other required data files
+initializeDataFile('meals.json', []);
+initializeDataFile('recipes.json', []);
+initializeDataFile('grocery-list.json', []);
+
+// Initialize display settings with defaults
+initializeDataFile('display-settings.json', {
+  autoNightMode: true,
+  nightModeStart: "20:00",
+  nightModeEnd: "07:00",
+  screenBurnProtection: true,
+  dimAfterMinutes: 10,
+  displayClock: false
+});
 
 // Routes
 app.get('/', (req, res) => {
@@ -153,14 +147,18 @@ const handleDataFile = (filename, fallbackFile) => {
     fs.readFile(resolvedPath, 'utf8', (err, data) => {
       if (err) {
         console.error(`[ERROR] Error reading ${filename}:`, err);
-        return res.status(500).json({ error: `Failed to load ${filename.replace('.json', '')} data` });
+        console.log(`[INFO] Returning empty array for ${filename}`);
+        // Return empty array instead of error for missing files
+        return res.json([]);
       }
       try {
         const jsonData = JSON.parse(data);
         res.json(jsonData);
       } catch (parseError) {
         console.error(`[ERROR] Error parsing ${filename}:`, parseError);
-        res.status(500).json({ error: `Failed to parse ${filename.replace('.json', '')} data` });
+        console.log(`[INFO] Returning empty array for ${filename} due to parse error`);
+        // Return empty array instead of error for malformed files
+        return res.json([]);
       }
     });
   };
@@ -275,11 +273,248 @@ app.patch('/api/chores/:id', (req, res) => {
 // GET endpoint for users
 app.get('/api/users', handleDataFile('users.json'));
 
+// POST endpoint to add a new user
+app.post('/api/users', (req, res) => {
+  const filePath = getDataPath('users.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err && !fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      data = '[]';
+    } else if (err) {
+      console.error('[ERROR] Error reading users.json for POST:', err);
+      return res.status(500).json({ error: 'Failed to read users data' });
+    }
+    
+    try {
+      const users = err ? [] : JSON.parse(data);
+      const newUser = {
+        id: Date.now().toString(),
+        name: req.body.name,
+        color: req.body.color || '#4285f4',
+        icon: req.body.icon || 'fa-user',
+        photo: req.body.photo || null,
+        gameTimeLimit: req.body.gameTimeLimit || 30
+      };
+      users.push(newUser);
+      
+      writeDataFile('users.json', users, res, () => {
+        res.status(201).json(newUser);
+      });
+    } catch (parseErr) {
+      console.error('[ERROR] Error parsing users.json:', parseErr);
+      res.status(500).json({ error: 'Invalid users data format' });
+    }
+  });
+});
+
+// PUT endpoint to update a user
+app.put('/api/users/:id', (req, res) => {
+  const filePath = getDataPath('users.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading users.json for PUT:', err);
+      return res.status(500).json({ error: 'Failed to read users data' });
+    }
+    try {
+      let users = JSON.parse(data);
+      const userIndex = users.findIndex(user => user.id === req.params.id);
+      
+      if (userIndex === -1) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      users[userIndex] = { ...users[userIndex], ...req.body };
+      
+      writeDataFile('users.json', users, res, () => {
+        res.status(200).json(users[userIndex]);
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing users.json:', err);
+      res.status(500).json({ error: 'Invalid users data format' });
+    }
+  });
+});
+
+// DELETE endpoint to remove a user
+app.delete('/api/users/:id', (req, res) => {
+  const filePath = getDataPath('users.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading users.json for DELETE:', err);
+      return res.status(500).json({ error: 'Failed to read users data' });
+    }
+    try {
+      let users = JSON.parse(data);
+      const originalLength = users.length;
+      users = users.filter(user => user.id !== req.params.id);
+      
+      if (users.length === originalLength) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      writeDataFile('users.json', users, res, () => {
+        res.status(200).json({ message: 'User deleted successfully' });
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing users.json:', err);
+      res.status(500).json({ error: 'Invalid users data format' });
+    }
+  });
+});
+
 // GET endpoint for meal categories
 app.get('/api/meal-categories', handleDataFile('meal-categories.json'));
 
+// POST endpoint to add a new meal category
+app.post('/api/meal-categories', (req, res) => {
+  const filePath = getDataPath('meal-categories.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err && !fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      data = '[]';
+    } else if (err) {
+      console.error('[ERROR] Error reading meal-categories.json for POST:', err);
+      return res.status(500).json({ error: 'Failed to read meal categories data' });
+    }
+    
+    try {
+      const categories = err ? [] : JSON.parse(data);
+      const newCategory = {
+        id: Date.now().toString(),
+        name: req.body.name,
+        color: req.body.color || '#4285f4',
+        icon: req.body.icon || 'fa-utensils'
+      };
+      categories.push(newCategory);
+      
+      writeDataFile('meal-categories.json', categories, res, () => {
+        res.status(201).json(newCategory);
+      });
+    } catch (parseErr) {
+      console.error('[ERROR] Error parsing meal-categories.json:', parseErr);
+      res.status(500).json({ error: 'Invalid meal categories data format' });
+    }
+  });
+});
+
+// PUT endpoint to update a meal category
+app.put('/api/meal-categories/:id', (req, res) => {
+  const filePath = getDataPath('meal-categories.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading meal-categories.json for PUT:', err);
+      return res.status(500).json({ error: 'Failed to read meal categories data' });
+    }
+    try {
+      let categories = JSON.parse(data);
+      const categoryIndex = categories.findIndex(cat => cat.id === req.params.id);
+      
+      if (categoryIndex === -1) {
+        return res.status(404).json({ error: 'Meal category not found' });
+      }
+      
+      categories[categoryIndex] = { ...categories[categoryIndex], ...req.body };
+      
+      writeDataFile('meal-categories.json', categories, res, () => {
+        res.status(200).json(categories[categoryIndex]);
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing meal-categories.json:', err);
+      res.status(500).json({ error: 'Invalid meal categories data format' });
+    }
+  });
+});
+
+// DELETE endpoint to remove a meal category
+app.delete('/api/meal-categories/:id', (req, res) => {
+  const filePath = getDataPath('meal-categories.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading meal-categories.json for DELETE:', err);
+      return res.status(500).json({ error: 'Failed to read meal categories data' });
+    }
+    try {
+      let categories = JSON.parse(data);
+      const originalLength = categories.length;
+      categories = categories.filter(cat => cat.id !== req.params.id);
+      
+      if (categories.length === originalLength) {
+        return res.status(404).json({ error: 'Meal category not found' });
+      }
+      
+      writeDataFile('meal-categories.json', categories, res, () => {
+        res.status(200).json({ message: 'Meal category deleted successfully' });
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing meal-categories.json:', err);
+      res.status(500).json({ error: 'Invalid meal categories data format' });
+    }
+  });
+});
+
 // GET endpoint for meals
 app.get('/api/meals', handleDataFile('meals.json'));
+
+// POST endpoint to add a new meal
+app.post('/api/meals', (req, res) => {
+  const filePath = getDataPath('meals.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err && !fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      data = '[]';
+    } else if (err) {
+      console.error('[ERROR] Error reading meals.json for POST:', err);
+      return res.status(500).json({ error: 'Failed to read meals data' });
+    }
+    
+    try {
+      const meals = err ? [] : JSON.parse(data);
+      const newMeal = {
+        id: Date.now().toString(),
+        description: req.body.description,
+        type: req.body.type,
+        date: req.body.date,
+        cook: req.body.cook || '',
+        recipeId: req.body.recipeId || null
+      };
+      meals.push(newMeal);
+      
+      writeDataFile('meals.json', meals, res, () => {
+        res.status(201).json(newMeal);
+      });
+    } catch (parseErr) {
+      console.error('[ERROR] Error parsing meals.json:', parseErr);
+      res.status(500).json({ error: 'Invalid meals data format' });
+    }
+  });
+});
+
+// DELETE endpoint to remove a meal
+app.delete('/api/meals/:id', (req, res) => {
+  const filePath = getDataPath('meals.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading meals.json for DELETE:', err);
+      return res.status(500).json({ error: 'Failed to read meals data' });
+    }
+    try {
+      let meals = JSON.parse(data);
+      const originalLength = meals.length;
+      meals = meals.filter(meal => meal.id !== req.params.id);
+      
+      if (meals.length === originalLength) {
+        return res.status(404).json({ error: 'Meal not found' });
+      }
+      
+      writeDataFile('meals.json', meals, res, () => {
+        res.status(200).json({ message: 'Meal deleted successfully' });
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing meals.json:', err);
+      res.status(500).json({ error: 'Invalid meals data format' });
+    }
+  });
+});
 
 // GET endpoint for recipes
 app.get('/api/recipes', handleDataFile('recipes.json'));
@@ -316,6 +551,93 @@ app.get('/api/recipes/:id', (req, res) => {
 
 // GET endpoint for grocery list
 app.get('/api/grocery-list', handleDataFile('grocery-list.json'));
+
+// POST endpoint to add a grocery item
+app.post('/api/grocery-list', (req, res) => {
+  const filePath = getDataPath('grocery-list.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err && !fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      data = '[]';
+    } else if (err) {
+      console.error('[ERROR] Error reading grocery-list.json for POST:', err);
+      return res.status(500).json({ error: 'Failed to read grocery list data' });
+    }
+    
+    try {
+      const items = err ? [] : JSON.parse(data);
+      const newItem = {
+        id: Date.now().toString(),
+        name: req.body.name,
+        quantity: req.body.quantity || '',
+        checked: false
+      };
+      items.push(newItem);
+      
+      writeDataFile('grocery-list.json', items, res, () => {
+        res.status(201).json(newItem);
+      });
+    } catch (parseErr) {
+      console.error('[ERROR] Error parsing grocery-list.json:', parseErr);
+      res.status(500).json({ error: 'Invalid grocery list data format' });
+    }
+  });
+});
+
+// PATCH endpoint to update a grocery item
+app.patch('/api/grocery-list/:id', (req, res) => {
+  const filePath = getDataPath('grocery-list.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading grocery-list.json for PATCH:', err);
+      return res.status(500).json({ error: 'Failed to read grocery list data' });
+    }
+    try {
+      let items = JSON.parse(data);
+      const itemIndex = items.findIndex(item => item.id === req.params.id);
+      
+      if (itemIndex === -1) {
+        return res.status(404).json({ error: 'Grocery item not found' });
+      }
+      
+      items[itemIndex] = { ...items[itemIndex], ...req.body };
+      
+      writeDataFile('grocery-list.json', items, res, () => {
+        res.status(200).json(items[itemIndex]);
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing grocery-list.json:', err);
+      res.status(500).json({ error: 'Invalid grocery list data format' });
+    }
+  });
+});
+
+// DELETE endpoint to remove a grocery item
+app.delete('/api/grocery-list/:id', (req, res) => {
+  const filePath = getDataPath('grocery-list.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading grocery-list.json for DELETE:', err);
+      return res.status(500).json({ error: 'Failed to read grocery list data' });
+    }
+    try {
+      let items = JSON.parse(data);
+      const originalLength = items.length;
+      items = items.filter(item => item.id !== req.params.id);
+      
+      if (items.length === originalLength) {
+        return res.status(404).json({ error: 'Grocery item not found' });
+      }
+      
+      writeDataFile('grocery-list.json', items, res, () => {
+        res.status(200).json({ message: 'Grocery item deleted successfully' });
+      });
+    } catch (err) {
+      console.error('[ERROR] Error parsing grocery-list.json:', err);
+      res.status(500).json({ error: 'Invalid grocery list data format' });
+    }
+  });
+});
 
 // GET endpoint for display settings
 app.get('/api/display-settings', (req, res) => {
