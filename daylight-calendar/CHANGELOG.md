@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.7.2-alpha-9] - 2025-12-02
+
+- **Fixed weather forecast API call** - Corrected REST API structure (flat, not nested target/data)
+- **Fixed forecast response parsing** - Now correctly extracts forecast from `service_response` wrapper
+- Added detailed logging for forecast data debugging
+- Forecast now returns 5-6 days with condition, temperature, templow, wind, humidity, precipitation
+
 ## [1.1.7.2-alpha-8] - 2025-12-02
 
 - **Fixed sunrise/sunset icons** - Replaced Font Awesome Pro icons (`fa-sunrise`, `fa-sunset`) with free alternatives (`fa-sun`, `fa-moon`)

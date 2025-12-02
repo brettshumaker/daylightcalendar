@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-8
+// Daylight Calendar v1.1.7.2-alpha-9
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -942,9 +942,10 @@ app.get('/api/weather/forecast', async (req, res) => {
     console.log(`[INFO] Fetching forecast for entity: ${weatherEntity}`);
     
     // Call the weather.get_forecasts service with return_response query parameter
+    // For REST API, use flat structure (not nested target/data)
     const response = await axios.post(`${hassApiUrl}/services/weather/get_forecasts?return_response=1`, {
-      type: 'daily',
-      entity_id: weatherEntity
+      entity_id: weatherEntity,
+      type: 'daily'
     }, { 
       headers: hassHeaders,
       timeout: 10000 // 10 second timeout
@@ -952,15 +953,20 @@ app.get('/api/weather/forecast', async (req, res) => {
     
     if (response.status === 200 && response.data) {
       console.log(`[INFO] Forecast data retrieved successfully`);
+      console.log(`[DEBUG] Forecast response data:`, JSON.stringify(response.data, null, 2));
       
-      // The response data structure from the service call
-      // Extract the forecast for our specific entity
-      if (response.data[weatherEntity] && response.data[weatherEntity].forecast) {
+      // The response structure is: { service_response: { "weather.entity": { forecast: [...] } } }
+      if (response.data.service_response && 
+          response.data.service_response[weatherEntity] && 
+          response.data.service_response[weatherEntity].forecast) {
+        const forecastData = response.data.service_response[weatherEntity].forecast;
+        console.log(`[INFO] Found forecast array with ${forecastData.length} days`);
         res.json({
-          forecast: response.data[weatherEntity].forecast
+          forecast: forecastData
         });
       } else {
         console.warn('[WARN] Forecast data structure unexpected');
+        console.warn('[WARN] Response keys:', Object.keys(response.data));
         res.json({ forecast: [] });
       }
     } else {
