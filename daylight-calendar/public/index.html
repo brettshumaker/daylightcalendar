@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
 </head>
+
 <body>
   <div id="app" class="theme-light">
     <!-- Screen burn prevention overlay -->
@@ -60,7 +62,7 @@
             <div class="full-date" id="full-date">December 02, 2025</div>
             <div class="large-time" id="large-time">14:50</div>
           </div>
-          
+
           <!-- Center: Current Weather with All Details -->
           <div class="weather-current-full" id="weather-container">
             <div class="weather-main-display">
@@ -85,16 +87,16 @@
                 <span id="weather-pressure">--</span>
               </div>
               <div class="weather-detail">
-                <i class="fas fa-sunrise"></i>
+                <i class="fas fa-sun"></i>
                 <span id="sun-sunrise">--</span>
               </div>
               <div class="weather-detail">
-                <i class="fas fa-sunset"></i>
+                <i class="fas fa-moon"></i>
                 <span id="sun-sunset">--</span>
               </div>
             </div>
           </div>
-          
+
           <!-- Right: 5-Day Forecast Only -->
           <div class="weather-forecast-section">
             <div class="forecast-days" id="forecast-days">
@@ -126,7 +128,8 @@
           <h1>Chore Board</h1>
           <div class="header-actions">
             <button id="jump-to-today" class="btn btn-secondary"><i class="fas fa-calendar-day"></i> Today</button>
-            <button id="toggle-completed" class="btn btn-secondary"><i class="fas fa-eye-slash"></i> Hide Completed</button>
+            <button id="toggle-completed" class="btn btn-secondary"><i class="fas fa-eye-slash"></i> Hide
+              Completed</button>
             <button id="add-chore-button" class="btn btn-primary"><i class="fas fa-plus"></i> New Chore</button>
           </div>
         </header>
@@ -170,7 +173,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Kanban Board for Chores -->
           <div id="chore-board" class="kanban-board">
             <!-- Lanes will be generated dynamically by JavaScript -->
@@ -185,7 +188,8 @@
             <button id="prev-week" class="btn btn-secondary"><i class="fas fa-chevron-left"></i></button>
             <button id="next-week" class="btn btn-secondary"><i class="fas fa-chevron-right"></i></button>
             <button id="recipe-book-button" class="btn btn-primary"><i class="fas fa-book"></i> Recipe Book</button>
-            <button id="grocery-list-button" class="btn btn-primary"><i class="fas fa-shopping-basket"></i> Grocery List</button>
+            <button id="grocery-list-button" class="btn btn-primary"><i class="fas fa-shopping-basket"></i> Grocery
+              List</button>
             <button id="add-meal-button" class="btn btn-primary"><i class="fas fa-plus"></i> Add Meal</button>
             <button id="meal-categories-button" class="btn btn-primary"><i class="fas fa-tags"></i> Categories</button>
           </div>
@@ -204,8 +208,10 @@
                     <div class="form-group">
                       <label for="mealDescription">Description</label>
                       <div class="meal-input-group">
-                        <input type="text" id="mealDescription" name="mealDescription" placeholder="What's for dinner?" required>
-                        <button type="button" id="select-recipe-btn" class="btn btn-sm btn-secondary"><i class="fas fa-book-open"></i> Select Recipe</button>
+                        <input type="text" id="mealDescription" name="mealDescription" placeholder="What's for dinner?"
+                          required>
+                        <button type="button" id="select-recipe-btn" class="btn btn-sm btn-secondary"><i
+                            class="fas fa-book-open"></i> Select Recipe</button>
                       </div>
                     </div>
                   </div>
@@ -233,14 +239,15 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Recipe Book Modal -->
           <div id="recipe-book-modal" class="modal">
             <div class="modal-content recipe-book-modal">
               <div class="modal-header">
                 <h3>Recipe Book</h3>
                 <div class="recipe-book-actions">
-                  <button id="add-recipe-button" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> New Recipe</button>
+                  <button id="add-recipe-button" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> New
+                    Recipe</button>
                   <button class="modal-close">&times;</button>
                 </div>
               </div>
@@ -266,7 +273,8 @@
                           <h3 id="recipe-name"></h3>
                           <p id="recipe-description"></p>
                           <div class="recipe-actions">
-                            <button id="add-to-meal-plan" class="btn btn-sm btn-primary"><i class="fas fa-calendar-plus"></i> Add to Meal Plan</button>
+                            <button id="add-to-meal-plan" class="btn btn-sm btn-primary"><i
+                                class="fas fa-calendar-plus"></i> Add to Meal Plan</button>
                           </div>
                         </div>
                       </div>
@@ -287,7 +295,8 @@
                         <div class="cooking-info">
                           <span id="recipe-cooking-time"><i class="fas fa-clock"></i> Prep Time: 30 min</span>
                         </div>
-                        <button id="start-cooking-mode" class="btn btn-primary"><i class="fas fa-utensils"></i> Start Cooking</button>
+                        <button id="start-cooking-mode" class="btn btn-primary"><i class="fas fa-utensils"></i> Start
+                          Cooking</button>
                       </div>
                     </div>
                   </div>
@@ -295,7 +304,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Grocery List Modal -->
           <div id="grocery-list-modal" class="modal">
             <div class="modal-content">
@@ -309,7 +318,8 @@
                     <form id="add-grocery-item-form">
                       <div class="form-row">
                         <div class="form-group">
-                          <input type="text" id="groceryItemName" name="groceryItemName" placeholder="Add item..." required>
+                          <input type="text" id="groceryItemName" name="groceryItemName" placeholder="Add item..."
+                            required>
                         </div>
                         <div class="form-group">
                           <input type="text" id="groceryItemQuantity" name="groceryItemQuantity" placeholder="Quantity">
@@ -330,7 +340,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Meal Categories Modal -->
           <div id="meal-categories-modal" class="modal">
             <div class="modal-content">
@@ -346,7 +356,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Cooking Mode Modal -->
           <div id="cooking-mode-modal" class="modal">
             <div class="modal-content cooking-mode-modal">
@@ -396,7 +406,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Weekly Meal Plan Grid -->
           <div id="meal-plan-grid">
             <div class="meal-plan-header">
@@ -436,31 +446,34 @@
               <!-- Profiles will be populated by JavaScript -->
             </div>
           </div>
-          
+
           <div class="games-grid">
             <div class="game-item" data-game-url="https://geometrydashonline.github.io/" data-game-age="8+">
               <div class="game-icon geometry-dash-icon">
-                <img src="https://vignette2.wikia.nocookie.net/geometry-dash/images/9/90/GeometryDash.png" alt="Geometry Dash" onerror="this.src='https://geometrydashonline.github.io/assets/images/icon.webp'">
+                <img src="https://vignette2.wikia.nocookie.net/geometry-dash/images/9/90/GeometryDash.png"
+                  alt="Geometry Dash" onerror="this.src='https://geometrydashonline.github.io/assets/images/icon.webp'">
               </div>
               <div class="game-title">Geometry Dash</div>
               <div class="playtime-indicator">15 min</div>
             </div>
             <div class="game-item" data-game-url="https://hextris.io/" data-game-age="6+">
               <div class="game-icon">
-                <img src="https://github.com/Hextris/hextris/blob/gh-pages/images/twitter-opengraph.png?raw=true" alt="Hextris" onerror="this.src='https://via.placeholder.com/64'">
+                <img src="https://github.com/Hextris/hextris/blob/gh-pages/images/twitter-opengraph.png?raw=true"
+                  alt="Hextris" onerror="this.src='https://via.placeholder.com/64'">
               </div>
               <div class="game-title">Hextris</div>
               <div class="playtime-indicator">10 min</div>
             </div>
             <div class="game-item" data-game-url="https://ellisonleao.github.io/clumsy-bird/" data-game-age="5+">
               <div class="game-icon">
-                <img src="https://nathanprinsley-games.prinsh.com/NathanPrinsleyGames/clumsybird/thumb_1.jpg" alt="Clumsy Bird" onerror="this.src='https://via.placeholder.com/64'">
+                <img src="https://nathanprinsley-games.prinsh.com/NathanPrinsleyGames/clumsybird/thumb_1.jpg"
+                  alt="Clumsy Bird" onerror="this.src='https://via.placeholder.com/64'">
               </div>
               <div class="game-title">Clumsy Bird</div>
               <div class="playtime-indicator">15 min</div>
             </div>
           </div>
-          
+
           <!-- Game Focus Modal -->
           <div id="game-focus-modal" class="modal">
             <div class="modal-content game-modal-content">
@@ -477,7 +490,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Get More Games Modal -->
           <div id="get-more-games-modal" class="modal">
             <div class="modal-content">
@@ -499,12 +512,14 @@
                         <span><i class="fas fa-star"></i> 4.5/5</span>
                       </div>
                     </div>
-                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i> Install</button>
+                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i>
+                      Install</button>
                   </div>
-                  
+
                   <div class="community-game-item">
                     <div class="community-game-icon">
-                      <img src="https://cdn2.scratch.mit.edu/get_image/project/31903442_480x360.png" alt="Space Shooter">
+                      <img src="https://cdn2.scratch.mit.edu/get_image/project/31903442_480x360.png"
+                        alt="Space Shooter">
                     </div>
                     <div class="community-game-info">
                       <h4>Space Shooter</h4>
@@ -514,12 +529,14 @@
                         <span><i class="fas fa-star"></i> 4.2/5</span>
                       </div>
                     </div>
-                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i> Install</button>
+                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i>
+                      Install</button>
                   </div>
-                  
+
                   <div class="community-game-item">
                     <div class="community-game-icon">
-                      <img src="https://cdn2.scratch.mit.edu/get_image/project/116222711_480x360.png" alt="Puzzle Quest">
+                      <img src="https://cdn2.scratch.mit.edu/get_image/project/116222711_480x360.png"
+                        alt="Puzzle Quest">
                     </div>
                     <div class="community-game-info">
                       <h4>Puzzle Quest</h4>
@@ -529,13 +546,14 @@
                         <span><i class="fas fa-star"></i> 4.8/5</span>
                       </div>
                     </div>
-                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i> Install</button>
+                    <button class="btn btn-sm btn-primary install-game-btn"><i class="fas fa-download"></i>
+                      Install</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <!-- Add Game Modal -->
           <div id="add-game-modal" class="modal">
             <div class="modal-content">
@@ -606,11 +624,12 @@
                 <video id="camera-test" autoplay playsinline></video>
                 <div class="media-test-buttons">
                   <button id="start-camera" class="btn btn-primary"><i class="fas fa-video"></i> Start Camera</button>
-                  <button id="stop-camera" class="btn btn-secondary" disabled><i class="fas fa-video-slash"></i> Stop Camera</button>
+                  <button id="stop-camera" class="btn btn-secondary" disabled><i class="fas fa-video-slash"></i> Stop
+                    Camera</button>
                 </div>
               </div>
             </div>
-            
+
             <div class="settings-card">
               <h3>Microphone Test</h3>
               <div class="microphone-test-container">
@@ -618,13 +637,15 @@
                   <div id="mic-level-bar"></div>
                 </div>
                 <div class="media-test-buttons">
-                  <button id="start-microphone" class="btn btn-primary"><i class="fas fa-microphone"></i> Start Microphone</button>
-                  <button id="stop-microphone" class="btn btn-secondary" disabled><i class="fas fa-microphone-slash"></i> Stop Microphone</button>
+                  <button id="start-microphone" class="btn btn-primary"><i class="fas fa-microphone"></i> Start
+                    Microphone</button>
+                  <button id="stop-microphone" class="btn btn-secondary" disabled><i
+                      class="fas fa-microphone-slash"></i> Stop Microphone</button>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div class="settings-section">
             <h2>App Settings</h2>
             <div class="settings-card">
@@ -650,7 +671,7 @@
                 </button>
               </div>
             </div>
-            
+
             <div class="settings-card">
               <h3>Display</h3>
               <div class="form-row">
@@ -659,7 +680,8 @@
                     <input type="checkbox" id="auto-night-mode" name="auto-night-mode">
                     Auto Night Mode
                   </label>
-                  <p class="setting-description">Automatically switch to night mode with reduced blue light between sunset and sunrise.</p>
+                  <p class="setting-description">Automatically switch to night mode with reduced blue light between
+                    sunset and sunrise.</p>
                 </div>
               </div>
               <div class="form-row">
@@ -673,7 +695,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="settings-card">
               <h3>Screen Protection</h3>
               <div class="form-row">
@@ -682,7 +704,8 @@
                     <input type="checkbox" id="screen-burn-protection" name="screen-burn-protection" checked>
                     Screen Burn Protection
                   </label>
-                  <p class="setting-description">Dims the screen after a period of inactivity to prevent burn-in on display.</p>
+                  <p class="setting-description">Dims the screen after a period of inactivity to prevent burn-in on
+                    display.</p>
                 </div>
               </div>
               <div class="form-row">
@@ -700,7 +723,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="settings-section">
             <h2>User Profiles</h2>
             <div class="settings-card">
@@ -708,14 +731,15 @@
                 <div class="profile-list-settings" id="profile-list-settings">
                   <!-- Profiles will be populated by JavaScript -->
                 </div>
-                <button id="add-profile-button" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Profile</button>
+                <button id="add-profile-button" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add
+                  Profile</button>
               </div>
             </div>
           </div>
-          
+
         </div>
       </div>
-      
+
       <!-- Profile Edit Modal -->
       <div id="edit-profile-modal" class="modal">
         <div class="modal-content">
@@ -726,42 +750,51 @@
           <div class="modal-body">
             <form id="edit-profile-form">
               <input type="hidden" id="profile-id">
-              
+
               <div class="form-row">
                 <div class="form-group">
                   <label for="profile-name">Name</label>
                   <input type="text" id="profile-name" required>
                 </div>
               </div>
-              
+
               <div class="form-row">
                 <div class="form-group">
                   <label for="profile-color">Profile Color</label>
                   <div class="color-selector" id="profile-color-selector">
-                    <button type="button" class="color-option" data-color="#4285f4" style="background-color: #4285f4;"></button>
-                    <button type="button" class="color-option" data-color="#34a853" style="background-color: #34a853;"></button>
-                    <button type="button" class="color-option" data-color="#fbbc05" style="background-color: #fbbc05;"></button>
-                    <button type="button" class="color-option" data-color="#ea4335" style="background-color: #ea4335;"></button>
-                    <button type="button" class="color-option" data-color="#9c27b0" style="background-color: #9c27b0;"></button>
-                    <button type="button" class="color-option" data-color="#009688" style="background-color: #009688;"></button>
+                    <button type="button" class="color-option" data-color="#4285f4"
+                      style="background-color: #4285f4;"></button>
+                    <button type="button" class="color-option" data-color="#34a853"
+                      style="background-color: #34a853;"></button>
+                    <button type="button" class="color-option" data-color="#fbbc05"
+                      style="background-color: #fbbc05;"></button>
+                    <button type="button" class="color-option" data-color="#ea4335"
+                      style="background-color: #ea4335;"></button>
+                    <button type="button" class="color-option" data-color="#9c27b0"
+                      style="background-color: #9c27b0;"></button>
+                    <button type="button" class="color-option" data-color="#009688"
+                      style="background-color: #009688;"></button>
                   </div>
                   <input type="hidden" id="profile-color" required>
                 </div>
-                
+
                 <div class="form-group">
                   <label for="profile-icon">Icon</label>
                   <div class="icon-selector" id="profile-icon-selector">
                     <button type="button" class="icon-option" data-icon="fa-user"><i class="fas fa-user"></i></button>
-                    <button type="button" class="icon-option" data-icon="fa-user-astronaut"><i class="fas fa-user-astronaut"></i></button>
-                    <button type="button" class="icon-option" data-icon="fa-user-ninja"><i class="fas fa-user-ninja"></i></button>
+                    <button type="button" class="icon-option" data-icon="fa-user-astronaut"><i
+                        class="fas fa-user-astronaut"></i></button>
+                    <button type="button" class="icon-option" data-icon="fa-user-ninja"><i
+                        class="fas fa-user-ninja"></i></button>
                     <button type="button" class="icon-option" data-icon="fa-dog"><i class="fas fa-dog"></i></button>
                     <button type="button" class="icon-option" data-icon="fa-cat"><i class="fas fa-cat"></i></button>
-                    <button type="button" class="icon-option" data-icon="fa-dragon"><i class="fas fa-dragon"></i></button>
+                    <button type="button" class="icon-option" data-icon="fa-dragon"><i
+                        class="fas fa-dragon"></i></button>
                   </div>
                   <input type="hidden" id="profile-icon" required>
                 </div>
               </div>
-              
+
               <div class="form-row">
                 <div class="form-group">
                   <label for="profile-photo">Profile Photo</label>
@@ -782,14 +815,14 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="form-row">
                 <div class="form-group">
                   <label for="profile-game-time-limit">Game Time Limit (minutes/day)</label>
                   <input type="number" id="profile-game-time-limit" min="0" max="120" value="30">
                 </div>
               </div>
-              
+
               <div class="form-actions">
                 <button type="button" class="btn btn-danger" id="delete-profile-btn">Delete Profile</button>
                 <button type="submit" class="btn btn-primary">Save Profile</button>
@@ -808,4 +841,5 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="dist/bundle.js"></script>
 </body>
-</html> 
+
+</html>

@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.7.2-alpha-8] - 2025-12-02
+
+- **Fixed sunrise/sunset icons** - Replaced Font Awesome Pro icons (`fa-sunrise`, `fa-sunset`) with free alternatives (`fa-sun`, `fa-moon`)
+
+## [1.1.7.2-alpha-7] - 2025-12-02
+
+- **Fixed forecast API call** - Added `?return_response=1` query parameter to service call
+- **Fixed missing initial data** - Added initial calls to `fetchWeather()`, `fetchSunTimes()`, and `fetchWeatherForecast()` on page load
+- **Fixed config update** - All weather functions now called when config updates and weather is enabled
+- Sunrise/sunset icons now display properly with times from sun entity
+
 ## [1.1.7.2-alpha-6] - 2025-12-02
 
 - **Major header redesign** to match dashboard YAML structure:

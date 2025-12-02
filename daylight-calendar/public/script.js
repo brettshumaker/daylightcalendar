@@ -667,6 +667,11 @@ document.addEventListener('DOMContentLoaded', function() {
   fetchAndDisplayMeals(); // Call to fetch meals
   loadUserToggles(); // Load user toggles
   
+  // Load weather data initially
+  fetchWeather();
+  fetchSunTimes();
+  fetchWeatherForecast();
+  
   // Set up periodic refresh
   setInterval(fetchCalendarEvents, 5 * 60 * 1000); // Refresh every 5 minutes
   setInterval(fetchWeather, 15 * 60 * 1000); // Refresh weather every 15 minutes
@@ -686,6 +691,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTheme(appConfig.theme);
         if (appConfig.show_weather) {
           fetchWeather();
+          fetchSunTimes();
+          fetchWeatherForecast();
           document.getElementById('weather-container').style.display = 'flex';
         } else {
           document.getElementById('weather-container').style.display = 'none';

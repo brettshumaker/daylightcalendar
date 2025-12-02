@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-6
+// Daylight Calendar v1.1.7.2-alpha-8
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -941,8 +941,8 @@ app.get('/api/weather/forecast', async (req, res) => {
     const weatherEntity = config.weather_entity || 'weather.forecast_home';
     console.log(`[INFO] Fetching forecast for entity: ${weatherEntity}`);
     
-    // Call the weather.get_forecasts service
-    const response = await axios.post(`${hassApiUrl}/services/weather/get_forecasts`, {
+    // Call the weather.get_forecasts service with return_response query parameter
+    const response = await axios.post(`${hassApiUrl}/services/weather/get_forecasts?return_response=1`, {
       type: 'daily',
       entity_id: weatherEntity
     }, { 
