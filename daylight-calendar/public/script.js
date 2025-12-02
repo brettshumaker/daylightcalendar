@@ -19,11 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarToggle.addEventListener('click', function() {
       app.classList.toggle('sidebar-collapsed');
       
-      // If we have a calendar instance, update its size after sidebar animation completes
+      // Re-render calendar after sidebar animation completes
       setTimeout(() => {
-        if (typeof calendar !== 'undefined' && calendar.updateSize) {
-          calendar.updateSize();
-        }
+        renderCalendarGrid();
       }, 300); // Match transition-speed CSS variable
     });
   }
@@ -223,105 +221,293 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Error loading configuration:', error);
     });
   
-  // Initialize calendar
-  const calendarEl = document.getElementById('calendar');
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    headerToolbar: {
-      left: '',
-      center: 'title',
-      right: 'prev,next'
-    },
-    height: '100%',
-    dayMaxEvents: true,
-    eventTimeFormat: {
-      hour: 'numeric',
-      minute: '2-digit',
-      meridiem: 'short'
-    },
-    eventClick: function(info) {
-      // Show event details
-      const event = info.event;
-      const startTime = event.start ? moment(event.start).format('h:mm A') : '';
-      const endTime = event.end ? moment(event.end).format('h:mm A') : '';
-      let timeStr = startTime;
-      if (endTime) {
-        timeStr += ` - ${endTime}`;
-      }
-      
-      const eventInfo = `${event.title} ${timeStr ? '(' + timeStr + ')' : ''}`;
-      document.getElementById('next-event-info').textContent = eventInfo;
-    },
-    dayCellDidMount: function(info) {
-      // Add weather icons to calendar days
-      const date = info.date;
-      const dateKey = moment(date).format('YYYY-MM-DD');
-      
-      // Get weather for this day (in a real implementation, this would come from an API or stored forecast)
-      const weatherForDay = getWeatherForDate(dateKey);
-      
-      if (weatherForDay) {
-        const weatherIcon = document.createElement('div');
-        weatherIcon.className = `day-weather-icon weather-${weatherForDay.condition}`;
-        
-        // Map condition to icon
-        const iconMap = {
-          'sunny': '<i class="fas fa-sun"></i>',
-          'cloudy': '<i class="fas fa-cloud"></i>',
-          'rainy': '<i class="fas fa-cloud-rain"></i>',
-          'stormy': '<i class="fas fa-bolt"></i>',
-          'snowy': '<i class="fas fa-snowflake"></i>'
-        };
-        
-        weatherIcon.innerHTML = iconMap[weatherForDay.condition] || iconMap['cloudy'];
-        
-        // Add to the day cell's top area
-        const dayTop = info.el.querySelector('.fc-daygrid-day-top');
-        if (dayTop) {
-          dayTop.appendChild(weatherIcon);
-        }
-      }
+  // Custom Calendar System
+  let currentView = localStorage.getItem('calendar-view') || 'week';
+  let allCalendarEvents = [];
+  let forecastData = [];
+  
+  // Weather icon mapping
+  const weatherIconMap = {
+    'clear-night': 'fa-moon',
+    'cloudy': 'fa-cloud',
+    'fog': 'fa-smog',
+    'partlycloudy': 'fa-cloud-sun',
+    'pouring': 'fa-cloud-showers-heavy',
+    'rainy': 'fa-cloud-rain',
+    'snowy': 'fa-snowflake',
+    'sunny': 'fa-sun',
+    'windy': 'fa-wind'
+  };
+  
+  // Initialize view selector buttons
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    // Set active state based on currentView
+    if (btn.dataset.view === currentView) {
+      btn.classList.add('active');
     }
+    
+    btn.addEventListener('click', () => {
+      // Update active state
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Update view and persist
+      currentView = btn.dataset.view;
+      localStorage.setItem('calendar-view', currentView);
+      
+      // Re-render calendar
+      renderCalendarGrid();
+    });
   });
   
-  calendar.render();
-  
-  // Fetch calendar events
-  function fetchCalendarEvents() {
-    fetch('/api/calendar')
-      .then(response => response.json())
-      .then(calendars => {
-        // Clear existing events
-        calendar.removeAllEvents();
-        
-        // Add events from all calendars
-        let allEvents = [];
+  // Fetch calendar events for users with assigned calendars
+  async function fetchCalendarEvents() {
+    try {
+      // First, get all users to find calendar assignments
+      const usersResponse = await fetch('/api/users');
+      const users = await usersResponse.json();
+      
+      // Get users with assigned calendars
+      const usersWithCalendars = users.filter(u => u.calendarEntity);
+      
+      if (usersWithCalendars.length === 0) {
+        console.log('No users with assigned calendars');
+        allCalendarEvents = [];
+        renderCalendarGrid();
+        return;
+      }
+      
+      // Fetch all calendars from HA
+      const calendarsResponse = await fetch('/api/calendar');
+      const calendars = await calendarsResponse.json();
+      
+      // Map events to users and apply user colors
+      allCalendarEvents = [];
+      
         if (Array.isArray(calendars)) {
           calendars.forEach(cal => {
-            if (cal.events) {
-              allEvents = allEvents.concat(cal.events.map(event => ({
+          // Find user assigned to this calendar
+          const assignedUser = usersWithCalendars.find(u => u.calendarEntity === cal.entity_id);
+          
+          if (assignedUser && cal.events) {
+            // Add events with user's color
+            cal.events.forEach(event => {
+              allCalendarEvents.push({
                 title: event.summary,
                 start: event.start.dateTime || event.start.date,
                 end: event.end.dateTime || event.end.date,
                 allDay: !event.start.dateTime,
-                backgroundColor: cal.backgroundColor || '#4285f4'
-              })));
+                location: event.location,
+                description: event.description,
+                userId: assignedUser.id,
+                userName: assignedUser.name,
+                userColor: assignedUser.color,
+                calendarEntity: cal.entity_id
+              });
+            });
             }
           });
         }
         
-        // Add events to calendar
-        calendar.addEventSource(allEvents);
+      // Render the calendar grid
+      renderCalendarGrid();
         
         // Update next event
-        updateNextEvent(allEvents);
-      })
-      .catch(error => {
+      updateNextEvent(allCalendarEvents);
+    } catch (error) {
         console.error('Error fetching calendar events:', error);
-      });
+    }
   }
   
-  // Load user toggles in calendar toolbar
+  // Render custom calendar grid
+  function renderCalendarGrid() {
+    const container = document.getElementById('custom-calendar-grid');
+    if (!container) return;
+    
+    // Calculate days to show based on current view
+    const daysToShow = {
+      'today': 1,
+      'tomorrow': 2,
+      'week': 7,
+      'twoweeks': 14,
+      'month': 28
+    }[currentView] || 7;
+    
+    // Generate array of dates starting from today
+    const days = [];
+    for (let i = 0; i < daysToShow; i++) {
+      days.push(moment().add(i, 'days'));
+    }
+    
+    // Create grid
+    const grid = document.createElement('div');
+    grid.className = `calendar-grid view-${currentView}`;
+    
+    days.forEach((day, index) => {
+      const dayCol = document.createElement('div');
+      dayCol.className = 'day-column';
+      dayCol.dataset.date = day.format('YYYY-MM-DD');
+      
+      // Mark today
+      if (day.isSame(moment(), 'day')) {
+        dayCol.classList.add('today');
+      }
+      
+      // Day header
+      const header = document.createElement('div');
+      header.className = 'day-header';
+      
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'day-number';
+      dayNumber.textContent = day.format('D');
+      
+      const dayName = document.createElement('div');
+      dayName.className = 'day-name';
+      dayName.textContent = day.format('dddd');
+      
+      const dayDate = document.createElement('div');
+      dayDate.className = 'day-date';
+      dayDate.textContent = day.format('MMMM YYYY');
+      
+      header.appendChild(dayNumber);
+      header.appendChild(dayName);
+      header.appendChild(dayDate);
+      
+      // Weather for the day (from forecast)
+      const dayWeather = document.createElement('div');
+      dayWeather.className = 'day-weather';
+      
+      const forecastForDay = forecastData.find(f => 
+        moment(f.datetime).isSame(day, 'day')
+      );
+      
+      if (forecastForDay) {
+        const weatherIcon = document.createElement('div');
+        weatherIcon.className = 'day-weather-icon';
+        const iconClass = weatherIconMap[forecastForDay.condition] || 'fa-cloud';
+        weatherIcon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+        
+        const weatherTemp = document.createElement('div');
+        weatherTemp.className = 'day-weather-temp';
+        const high = forecastForDay.temperature ? Math.round(forecastForDay.temperature) : '--';
+        const low = forecastForDay.templow ? Math.round(forecastForDay.templow) : '--';
+        weatherTemp.textContent = `${high}° / ${low}°`;
+        
+        dayWeather.appendChild(weatherIcon);
+        dayWeather.appendChild(weatherTemp);
+      }
+      
+      // Events for the day
+      const eventsContainer = document.createElement('div');
+      eventsContainer.className = 'day-events';
+      
+      // Filter events for this day
+      const eventsForDay = allCalendarEvents.filter(event => {
+        const eventStart = moment(event.start);
+        return eventStart.isSame(day, 'day');
+      });
+      
+      if (eventsForDay.length === 0) {
+        eventsContainer.classList.add('no-events');
+        eventsContainer.textContent = 'No events';
+      } else {
+        // Sort events by start time
+        eventsForDay.sort((a, b) => moment(a.start).diff(moment(b.start)));
+        
+        eventsForDay.forEach(event => {
+          const eventEl = document.createElement('div');
+          eventEl.className = 'calendar-event';
+          eventEl.style.backgroundColor = event.userColor;
+          eventEl.dataset.userId = event.userId;
+          eventEl.dataset.calendarEntity = event.calendarEntity;
+          
+          // Check if event is in the past
+          if (moment(event.end || event.start).isBefore(moment())) {
+            eventEl.classList.add('past');
+          }
+          
+          // Add all-day class if needed
+          if (event.allDay) {
+            eventEl.classList.add('all-day');
+          }
+          
+          // Event time
+          if (!event.allDay) {
+            const timeEl = document.createElement('div');
+            timeEl.className = 'event-time';
+            const startTime = moment(event.start).format('HH:mm');
+            const endTime = event.end ? ` - ${moment(event.end).format('HH:mm')}` : '';
+            timeEl.textContent = `${startTime}${endTime}`;
+            eventEl.appendChild(timeEl);
+          } else {
+            const timeEl = document.createElement('div');
+            timeEl.className = 'event-time';
+            timeEl.textContent = 'Entire day';
+            eventEl.appendChild(timeEl);
+          }
+          
+          // Event title
+          const titleEl = document.createElement('div');
+          titleEl.className = 'event-title';
+          titleEl.textContent = event.title;
+          eventEl.appendChild(titleEl);
+          
+          // Event location if present
+          if (event.location) {
+            const locationEl = document.createElement('div');
+            locationEl.className = 'event-location';
+            locationEl.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${event.location}`;
+            eventEl.appendChild(locationEl);
+          }
+          
+          // Click handler for event details
+          eventEl.addEventListener('click', () => {
+            const startTime = event.start ? moment(event.start).format('h:mm A') : '';
+            const endTime = event.end ? moment(event.end).format('h:mm A') : '';
+            let timeStr = startTime;
+            if (endTime && !event.allDay) {
+              timeStr += ` - ${endTime}`;
+            }
+            
+            const eventInfo = `${event.title} ${timeStr ? '(' + timeStr + ')' : ''}`;
+            document.getElementById('next-event-info').textContent = eventInfo;
+          });
+          
+          eventsContainer.appendChild(eventEl);
+        });
+      }
+      
+      dayCol.appendChild(header);
+      dayCol.appendChild(dayWeather);
+      dayCol.appendChild(eventsContainer);
+      grid.appendChild(dayCol);
+    });
+    
+    // Replace container content
+    container.innerHTML = '';
+    container.appendChild(grid);
+  }
+  
+  // Filter calendar events based on active user toggles
+  function filterCalendarEvents() {
+    const toggles = document.querySelectorAll('.user-toggle');
+    const activeUserIds = Array.from(toggles)
+      .filter(t => t.classList.contains('active'))
+      .map(t => t.dataset.userId);
+    
+    // Get all event elements
+    document.querySelectorAll('.calendar-event').forEach(eventEl => {
+      const eventUserId = eventEl.dataset.userId;
+      
+      if (activeUserIds.includes(eventUserId)) {
+        // Show event
+        eventEl.classList.remove('filtered-out');
+      } else {
+        // Hide event with animation
+        eventEl.classList.add('filtered-out');
+      }
+    });
+  }
   function loadUserToggles() {
     const userToggles = document.getElementById('user-toggles');
     if (!userToggles) return;
@@ -332,11 +518,22 @@ document.addEventListener('DOMContentLoaded', function() {
         userToggles.innerHTML = '';
         
         if (Array.isArray(users)) {
-          users.forEach(user => {
+          // Only show users with assigned calendars
+          const usersWithCalendars = users.filter(user => user.calendarEntity);
+          
+          if (usersWithCalendars.length === 0) {
+            userToggles.innerHTML = '<div class="no-users-message">No calendars assigned to users yet</div>';
+            return;
+          }
+          
+          usersWithCalendars.forEach(user => {
             const toggle = document.createElement('div');
             toggle.className = 'user-toggle active';
-            toggle.dataset.user = user.name;
+            toggle.dataset.userId = user.id;
+            toggle.dataset.userName = user.name;
+            toggle.dataset.calendarEntity = user.calendarEntity;
             toggle.style.backgroundColor = user.color;
+            toggle.title = `${user.name} - Click to toggle events`;
             
             if (user.icon) {
               toggle.innerHTML = `<i class="fas ${user.icon}"></i>`;
@@ -348,9 +545,8 @@ document.addEventListener('DOMContentLoaded', function() {
               toggle.classList.toggle('active');
               toggle.classList.toggle('inactive');
               
-              // In a real app, this would filter calendar events
-              // For now, we'll just show a message
-              console.log(`Toggle ${user.name}'s events: ${toggle.classList.contains('active') ? 'shown' : 'hidden'}`);
+              // Filter calendar events
+              filterCalendarEvents();
             });
             
             userToggles.appendChild(toggle);
@@ -485,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update weather icon
         const iconEl = document.getElementById('weather-icon');
         if (iconEl) {
-          const iconClass = iconMap[condition] || 'fa-cloud';
+        const iconClass = iconMap[condition] || 'fa-cloud';
           iconEl.className = `fas ${iconClass}`;
         }
         
@@ -577,7 +773,13 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
         if (data && data.forecast && Array.isArray(data.forecast)) {
+          forecastData = data.forecast; // Store globally for calendar use
           displayForecast(data.forecast);
+          
+          // Re-render calendar if it's already been rendered
+          if (allCalendarEvents.length > 0) {
+            renderCalendarGrid();
+          }
         }
       })
       .catch(error => {
@@ -728,12 +930,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Special handling for calendar rendering when its tab becomes active
       if (targetId === 'calendar-content') {
-        // Re-render or resize FullCalendar if it was hidden, as it might not calculate its size correctly when initially hidden.
-        // Using a slight delay can sometimes help ensure the container is fully visible.
+        // Re-render custom calendar when tab becomes active
         setTimeout(() => {
-          if (calendar) { // calendar is the FullCalendar instance
-            calendar.render(); // Or calendar.updateSize(); depending on FullCalendar version and needs.
-          }
+          renderCalendarGrid();
         }, 0);
       }
     });
@@ -1881,8 +2080,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  // Load available calendars and populate dropdown
+  async function loadAvailableCalendars(currentUserCalendar = null) {
+    try {
+      const [calendarsResponse, usersResponse] = await Promise.all([
+        fetch('/api/calendars/list'),
+        fetch('/api/users')
+      ]);
+      
+      const availableCalendars = await calendarsResponse.json();
+      const users = await usersResponse.json();
+      
+      // Get list of already assigned calendars (excluding current user's)
+      const assignedCalendars = users
+        .filter(u => u.calendarEntity && u.calendarEntity !== currentUserCalendar)
+        .map(u => u.calendarEntity);
+      
+      const calendarSelect = document.getElementById('profile-calendar');
+      calendarSelect.innerHTML = '<option value="">None</option>';
+      
+      availableCalendars.forEach(cal => {
+        const option = document.createElement('option');
+        option.value = cal.entity_id;
+        option.textContent = cal.name;
+        
+        // Disable if already assigned to another user
+        if (assignedCalendars.includes(cal.entity_id)) {
+          option.disabled = true;
+          option.textContent += ' (Already assigned)';
+        }
+        
+        calendarSelect.appendChild(option);
+      });
+      
+      // Set selected calendar if provided
+      if (currentUserCalendar) {
+        calendarSelect.value = currentUserCalendar;
+      }
+    } catch (error) {
+      console.error('Error loading available calendars:', error);
+    }
+  }
+  
   // Open profile edit
-  function openProfileEdit(user) {
+  async function openProfileEdit(user) {
     // Set form title
     profileEditTitle.textContent = user ? 'Edit Profile' : 'Add New Profile';
     
@@ -1894,6 +2135,9 @@ document.addEventListener('DOMContentLoaded', function() {
       el.classList.remove('selected');
     });
     
+    // Load available calendars
+    await loadAvailableCalendars(user ? user.calendarEntity : null);
+    
     // If editing an existing user, populate form
     if (user) {
       document.getElementById('profile-id').value = user.id;
@@ -1901,6 +2145,11 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('profile-color').value = user.color;
       document.getElementById('profile-icon').value = user.icon;
       document.getElementById('profile-game-time-limit').value = user.gameTimeLimit || 30;
+      
+      // Set calendar if assigned
+      if (user.calendarEntity) {
+        document.getElementById('profile-calendar').value = user.calendarEntity;
+      }
       
       // Select color
       const colorOption = document.querySelector(`.color-option[data-color="${user.color}"]`);
@@ -2095,11 +2344,14 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       
       const profileId = document.getElementById('profile-id').value;
+      const calendarValue = document.getElementById('profile-calendar').value;
+      
       const profileData = {
         name: document.getElementById('profile-name').value,
         color: document.getElementById('profile-color').value,
         icon: document.getElementById('profile-icon').value,
         photo: document.getElementById('profile-photo-data').value || null,
+        calendarEntity: calendarValue || null,
         gameTimeLimit: parseInt(document.getElementById('profile-game-time-limit').value, 10)
       };
       

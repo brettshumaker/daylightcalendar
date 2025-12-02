@@ -105,6 +105,13 @@
           </div>
         </header>
         <div class="calendar-toolbar">
+          <div class="calendar-view-selector">
+            <button class="view-btn" data-view="today">Today</button>
+            <button class="view-btn" data-view="tomorrow">Tomorrow</button>
+            <button class="view-btn active" data-view="week">Week</button>
+            <button class="view-btn" data-view="twoweeks">2 Weeks</button>
+            <button class="view-btn" data-view="month">Month</button>
+          </div>
           <div class="calendar-users">
             <div class="users-toggle-label">Users:</div>
             <div id="user-toggles" class="user-toggle-icons">
@@ -113,7 +120,9 @@
           </div>
         </div>
         <main>
-          <div id="calendar"></div>
+          <div id="custom-calendar-grid">
+            <!-- Custom calendar will be rendered here by JavaScript -->
+          </div>
         </main>
         <footer>
           <div class="next-event" id="next-event">
@@ -755,6 +764,18 @@
                 <div class="form-group">
                   <label for="profile-name">Name</label>
                   <input type="text" id="profile-name" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profile-calendar">Assigned Calendar</label>
+                  <select id="profile-calendar">
+                    <option value="">None</option>
+                    <!-- Calendars will be populated by JavaScript -->
+                  </select>
+                  <p class="setting-description">Assign a Home Assistant calendar to this profile. Each calendar can
+                    only be assigned to one user.</p>
                 </div>
               </div>
 

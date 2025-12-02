@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-11
+// Daylight Calendar v1.1.7.2-alpha-12
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -92,7 +92,9 @@ initializeDataFile('users.json', [
     id: "dev-1",
     name: "Developer",
     color: "#4285f4",
-    icon: "fa-user"
+    icon: "fa-user",
+    calendarEntity: null,
+    gameTimeLimit: 30
   }
 ]);
 
@@ -859,6 +861,68 @@ app.get('/api/weather', async (req, res) => {
     } else {
       res.status(500).json({ 
         error: 'Failed to fetch weather data', 
+        details: error.message
+      });
+    }
+  }
+});
+
+// GET endpoint for available calendars list (for profile assignment)
+app.get('/api/calendars/list', async (req, res) => {
+  // Check if we have authentication
+  if (!supervisorToken) {
+    console.error('[ERROR] No authentication token available for calendars list API');
+    return res.status(500).json({ 
+      error: 'Authentication not configured', 
+      details: 'SUPERVISOR_TOKEN or HASS_TOKEN environment variable not set'
+    });
+  }
+  
+  try {
+    console.log(`[INFO] Fetching calendars list from: ${hassApiUrl}/calendars`);
+    
+    const response = await axios.get(`${hassApiUrl}/calendars`, { 
+      headers: hassHeaders,
+      timeout: 10000 // 10 second timeout
+    });
+    
+    if (response.status === 200 && response.data) {
+      // Return simplified list with entity_id and friendly name
+      const calendarsList = response.data.map(cal => ({
+        entity_id: cal.entity_id,
+        name: cal.name || cal.entity_id
+      }));
+      
+      console.log(`[INFO] Found ${calendarsList.length} calendars`);
+      res.json(calendarsList);
+    } else {
+      console.error(`[ERROR] Calendars list API returned unexpected status: ${response.status}`);
+      res.status(response.status || 500).json({ 
+        error: 'Failed to fetch calendars list', 
+        details: 'Received unexpected response'
+      });
+    }
+  } catch (error) {
+    console.error('[ERROR] Error fetching calendars list:', error.message);
+    
+    if (error.response) {
+      console.error('[ERROR] Calendars list API Response Status:', error.response.status);
+      console.error('[ERROR] Calendars list API Response Data:', error.response.data);
+      
+      res.status(error.response.status).json({ 
+        error: 'Failed to fetch calendars list', 
+        details: error.response.data,
+        statusCode: error.response.status
+      });
+    } else if (error.request) {
+      console.error('[ERROR] No response received from calendars list API');
+      res.status(500).json({ 
+        error: 'No response received from Home Assistant calendars API', 
+        details: 'Request was made but no response was received'
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to fetch calendars list', 
         details: error.message
       });
     }
