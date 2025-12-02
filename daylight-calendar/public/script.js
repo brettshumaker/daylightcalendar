@@ -2179,14 +2179,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Add profile button
-  const addProfileButton = document.getElementById('add-profile-button');
-  if (addProfileButton) {
-    addProfileButton.addEventListener('click', () => {
-      openProfileEdit(null); // Pass null to create new profile
-    });
-  }
-  
   // Load profiles when settings tab is active
   document.querySelector('.tab-item[data-tab-target="settings-content"]').addEventListener('click', () => {
     loadProfilesForSettings();

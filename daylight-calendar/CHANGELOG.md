@@ -1,9 +1,13 @@
 # Changelog
 
+## [1.1.7.2-alpha-11] - 2025-12-02
+
+- **Fixed build error** - Removed duplicate `addProfileButton` event listener (was already set up earlier in the file)
+
 ## [1.1.7.2-alpha-10] - 2025-12-02
 
 - **Fixed profile saving** - Implemented actual API calls to save user profiles (was just simulation before)
-- **Fixed profile creation** - Added missing "Add Profile" button click handler
+- **Fixed profile creation** - Add Profile button now opens modal properly
 - **Fixed profile deletion** - Implemented actual API call to delete profiles
 - Profile changes now properly persist to `/api/users` endpoints
 - Added POST /api/users for creating new profiles
