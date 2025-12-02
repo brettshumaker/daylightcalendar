@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-13
+// Daylight Calendar v1.1.7.2-alpha-14
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -730,7 +730,14 @@ app.get('/api/calendar', async (req, res) => {
   
   try {
     // Read users to find assigned calendars
-    const usersData = readData('users.json');
+    const usersFilePath = getDataPath('users.json');
+    let usersData = [];
+    
+    if (fs.existsSync(usersFilePath)) {
+      const usersFileContent = fs.readFileSync(usersFilePath, 'utf8');
+      usersData = JSON.parse(usersFileContent);
+    }
+    
     const assignedCalendarIds = usersData
       .filter(u => u.calendarEntity)
       .map(u => u.calendarEntity);

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.7.2-alpha-14] - 2025-12-02
+
+- **Fixed readData error** - Fixed undefined function error in calendar endpoint
+
 ## [1.1.7.2-alpha-13] - 2025-12-02
 
 - **Fixed calendar events not loading** - Updated `/api/calendar` endpoint to fetch events for assigned calendars only (30 days range)
