@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.7.2-alpha-4] - 2025-12-02
+
+- Enhanced weather widget UI with detailed information
+- Added humidity, pressure, sunrise/sunset times display
+- Added wind speed and direction display
+- Redesigned weather layout with larger icon and better organization
+- Improved responsive design for weather widget
+
+## [1.1.7.2-alpha-3] - 2025-12-02
+
+- Fixed weather condition text showing as "Unknown"
+- Changed to read condition from `data.state` instead of `data.attributes.condition`
+- Added weather condition logging on backend
+
 ## [1.1.7.2-alpha-2] - 2025-12-02
 
 - Added `homeassistant_api: true` to config for Core API access

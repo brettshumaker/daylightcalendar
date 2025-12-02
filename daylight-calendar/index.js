@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-2
+// Daylight Calendar v1.1.7.2-alpha-4
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -807,6 +807,7 @@ app.get('/api/weather', async (req, res) => {
           typeof weatherData.attributes.temperature === 'number') {
         
         console.log(`[INFO] Weather temperature: ${weatherData.attributes.temperature}`);
+        console.log(`[INFO] Weather condition: ${weatherData.state}`);
         
         // Format temperature with appropriate units
         const tempUnit = weatherData.attributes.temperature_unit || '°C';

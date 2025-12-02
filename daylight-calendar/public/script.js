@@ -416,14 +416,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data || data.enabled === false) return;
         if (!data.attributes) return;
         
-        const temp = data.attributes.temperature ? Math.round(data.attributes.temperature) : '--';
-        const condition = data.attributes.condition || 'unknown';
+        const attrs = data.attributes;
+        const temp = attrs.temperature ? Math.round(attrs.temperature) : '--';
+        const tempUnit = attrs.temperature_unit || '°F';
+        const condition = data.state || 'unknown';
         
-        const tempEl = document.querySelector('.weather .temp');
-        const conditionEl = document.querySelector('.weather .condition i');
-        const weatherContainer = document.getElementById('weather-container');
+        // Update temperature
+        const tempEl = document.getElementById('weather-temp');
+        if (tempEl) {
+          tempEl.textContent = `${temp}${tempUnit}`;
+        }
         
-        tempEl.textContent = `${temp}°`;
+        // Update condition text
+        const conditionTextEl = document.getElementById('weather-condition-text');
+        if (conditionTextEl) {
+          const readableCondition = condition
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          conditionTextEl.textContent = readableCondition;
+        }
         
         // Map Home Assistant weather condition to Font Awesome icon
         const iconMap = {
@@ -444,25 +455,64 @@ document.addEventListener('DOMContentLoaded', function() {
           'exceptional': 'fa-exclamation-triangle'
         };
         
-        const iconClass = iconMap[condition] || 'fa-cloud';
-        conditionEl.className = `fas ${iconClass}`;
-        
-        // Add a text indicator for the condition
-        let conditionText = document.querySelector('.weather .condition-text');
-        if (!conditionText) {
-          conditionText = document.createElement('div');
-          conditionText.className = 'condition-text';
-          weatherContainer.appendChild(conditionText);
+        // Update weather icon
+        const iconEl = document.getElementById('weather-icon');
+        if (iconEl) {
+          const iconClass = iconMap[condition] || 'fa-cloud';
+          iconEl.className = `fas ${iconClass}`;
         }
         
-        // Format the condition name to be more readable
-        const readableCondition = condition
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase());
+        // Update humidity
+        const humidityEl = document.getElementById('weather-humidity');
+        if (humidityEl && attrs.humidity !== undefined) {
+          humidityEl.textContent = `${attrs.humidity}%`;
+        }
         
-        conditionText.textContent = readableCondition;
+        // Update pressure
+        const pressureEl = document.getElementById('weather-pressure');
+        if (pressureEl && attrs.pressure !== undefined) {
+          const pressureUnit = attrs.pressure_unit || 'hPa';
+          pressureEl.textContent = `${attrs.pressure} ${pressureUnit}`;
+        }
         
-        // Add a last updated indicator
+        // Update sunrise
+        const sunriseEl = document.getElementById('weather-sunrise');
+        if (sunriseEl && attrs.sunrise) {
+          const sunriseTime = new Date(attrs.sunrise);
+          sunriseEl.textContent = sunriseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Update sunset
+        const sunsetEl = document.getElementById('weather-sunset');
+        if (sunsetEl && attrs.sunset) {
+          const sunsetTime = new Date(attrs.sunset);
+          sunsetEl.textContent = sunsetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Update wind
+        const windEl = document.getElementById('weather-wind');
+        if (windEl && attrs.wind_speed !== undefined) {
+          const windSpeed = attrs.wind_speed;
+          const windSpeedUnit = attrs.wind_speed_unit || 'km/h';
+          const windBearing = attrs.wind_bearing;
+          
+          // Convert wind bearing to cardinal direction
+          const getWindDirection = (bearing) => {
+            if (bearing === undefined) return '';
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(bearing / 45) % 8;
+            return directions[index];
+          };
+          
+          const windDirection = getWindDirection(windBearing);
+          const windText = windDirection 
+            ? `${windDirection} ${windSpeed} ${windSpeedUnit}`
+            : `${windSpeed} ${windSpeedUnit}`;
+          
+          windEl.querySelector('span').textContent = windText;
+        }
+        
+        // Keep the old last updated for compatibility
         let lastUpdated = document.querySelector('.weather .last-updated');
         if (!lastUpdated) {
           lastUpdated = document.createElement('div');

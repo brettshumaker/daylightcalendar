@@ -58,9 +58,37 @@
             <h1 id="current-time">--:--</h1>
             <h2 id="current-date">Loading...</h2>
           </div>
-          <div class="weather" id="weather-container">
-            <div class="temp">--°</div>
-            <div class="condition"><i class="fas fa-cloud"></i></div>
+          <div class="weather-widget" id="weather-container">
+            <div class="weather-main">
+              <div class="weather-icon">
+                <i class="fas fa-cloud" id="weather-icon"></i>
+              </div>
+              <div class="weather-details">
+                <div class="weather-detail">
+                  <i class="fas fa-tint"></i>
+                  <span id="weather-humidity">--</span>
+                </div>
+                <div class="weather-detail">
+                  <i class="fas fa-tachometer-alt"></i>
+                  <span id="weather-pressure">--</span>
+                </div>
+                <div class="weather-detail">
+                  <i class="fas fa-sunrise"></i>
+                  <span id="weather-sunrise">--</span>
+                </div>
+                <div class="weather-detail">
+                  <i class="fas fa-sunset"></i>
+                  <span id="weather-sunset">--</span>
+                </div>
+              </div>
+            </div>
+            <div class="weather-temp-section">
+              <div class="weather-temp" id="weather-temp">--°</div>
+              <div class="weather-condition-text" id="weather-condition-text">--</div>
+              <div class="weather-wind" id="weather-wind">
+                <i class="fas fa-wind"></i> <span>--</span>
+              </div>
+            </div>
           </div>
         </header>
         <div class="calendar-toolbar">
