@@ -1,8 +1,14 @@
 # Changelog
 
+## [1.1.7.2-alpha-2] - 2025-12-02
+
+- Added `homeassistant_api: true` to config for Core API access
+- Fixed 401 Unauthorized errors for calendar and weather endpoints
+- Added authentication debugging and logging
+
 ## [1.1.7.2-alpha-1] - 2025-12-02
 
-- Fixing 401s
+- Initial attempt at fixing 401s with enhanced logging
 
 ## [1.1.7.2-alpha] - 2025-12-02
 
