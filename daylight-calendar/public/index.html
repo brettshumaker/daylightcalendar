@@ -61,12 +61,21 @@
             <div class="large-time" id="large-time">14:50</div>
           </div>
           
-          <!-- Center: Current Weather -->
-          <div class="weather-current" id="weather-container">
-            <div class="weather-icon-large">
-              <i class="fas fa-cloud" id="weather-icon"></i>
+          <!-- Center: Current Weather with All Details -->
+          <div class="weather-current-full" id="weather-container">
+            <div class="weather-main-display">
+              <div class="weather-icon-large">
+                <i class="fas fa-cloud" id="weather-icon"></i>
+              </div>
+              <div class="weather-current-temp">
+                <div class="temp-value" id="weather-temp">--°</div>
+                <div class="temp-condition" id="weather-condition-text">--</div>
+                <div class="temp-wind" id="weather-wind">
+                  <i class="fas fa-wind"></i> <span>--</span>
+                </div>
+              </div>
             </div>
-            <div class="weather-current-details">
+            <div class="weather-details-grid">
               <div class="weather-detail">
                 <i class="fas fa-tint"></i>
                 <span id="weather-humidity">--</span>
@@ -77,24 +86,17 @@
               </div>
               <div class="weather-detail">
                 <i class="fas fa-sunrise"></i>
-                <span id="weather-sunrise">--</span>
+                <span id="sun-sunrise">--</span>
               </div>
               <div class="weather-detail">
                 <i class="fas fa-sunset"></i>
-                <span id="weather-sunset">--</span>
+                <span id="sun-sunset">--</span>
               </div>
             </div>
           </div>
           
-          <!-- Right: Temperature & Forecast -->
+          <!-- Right: 5-Day Forecast Only -->
           <div class="weather-forecast-section">
-            <div class="current-temp-large">
-              <div class="temp-value" id="weather-temp">--°</div>
-              <div class="temp-condition" id="weather-condition-text">--</div>
-              <div class="temp-wind" id="weather-wind">
-                <i class="fas fa-wind"></i> <span>--</span>
-              </div>
-            </div>
             <div class="forecast-days" id="forecast-days">
               <!-- 5-day forecast will be populated by JS -->
             </div>

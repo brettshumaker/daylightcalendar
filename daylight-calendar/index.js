@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-5
+// Daylight Calendar v1.1.7.2-alpha-6
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -859,6 +859,138 @@ app.get('/api/weather', async (req, res) => {
     } else {
       res.status(500).json({ 
         error: 'Failed to fetch weather data', 
+        details: error.message
+      });
+    }
+  }
+});
+
+// GET endpoint for sun entity (sunrise/sunset times)
+app.get('/api/sun', async (req, res) => {
+  // Check if we have authentication
+  if (!supervisorToken) {
+    console.error('[ERROR] No authentication token available for sun API');
+    return res.status(500).json({ 
+      error: 'Authentication not configured', 
+      details: 'SUPERVISOR_TOKEN or HASS_TOKEN environment variable not set'
+    });
+  }
+  
+  try {
+    console.log(`[INFO] Fetching sun entity from: ${hassApiUrl}/states/sun.sun`);
+    
+    const response = await axios.get(`${hassApiUrl}/states/sun.sun`, { 
+      headers: hassHeaders,
+      timeout: 10000 // 10 second timeout
+    });
+    
+    if (response.status === 200 && response.data) {
+      console.log(`[INFO] Sun data retrieved successfully`);
+      res.json(response.data);
+    } else {
+      console.error(`[ERROR] Sun API returned unexpected status: ${response.status}`);
+      res.status(response.status || 500).json({ 
+        error: 'Failed to fetch sun data', 
+        details: 'Received unexpected response'
+      });
+    }
+  } catch (error) {
+    console.error('[ERROR] Error fetching sun data:', error.message);
+    
+    if (error.response) {
+      console.error('[ERROR] Sun API Response Status:', error.response.status);
+      console.error('[ERROR] Sun API Response Data:', error.response.data);
+      
+      res.status(error.response.status).json({ 
+        error: 'Failed to fetch sun data', 
+        details: error.response.data,
+        statusCode: error.response.status
+      });
+    } else if (error.request) {
+      console.error('[ERROR] No response received from sun API');
+      res.status(500).json({ 
+        error: 'No response received from Home Assistant sun API', 
+        details: 'Request was made but no response was received'
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to fetch sun data', 
+        details: error.message
+      });
+    }
+  }
+});
+
+// GET endpoint for weather forecast using weather.get_forecasts service
+app.get('/api/weather/forecast', async (req, res) => {
+  if (!config || !config.show_weather) {
+    console.log('[INFO] Weather display is disabled in config.');
+    return res.json({ enabled: false });
+  }
+  
+  // Check if we have authentication
+  if (!supervisorToken) {
+    console.error('[ERROR] No authentication token available for forecast API');
+    return res.status(500).json({ 
+      error: 'Authentication not configured', 
+      details: 'SUPERVISOR_TOKEN or HASS_TOKEN environment variable not set'
+    });
+  }
+  
+  try {
+    const weatherEntity = config.weather_entity || 'weather.forecast_home';
+    console.log(`[INFO] Fetching forecast for entity: ${weatherEntity}`);
+    
+    // Call the weather.get_forecasts service
+    const response = await axios.post(`${hassApiUrl}/services/weather/get_forecasts`, {
+      type: 'daily',
+      entity_id: weatherEntity
+    }, { 
+      headers: hassHeaders,
+      timeout: 10000 // 10 second timeout
+    });
+    
+    if (response.status === 200 && response.data) {
+      console.log(`[INFO] Forecast data retrieved successfully`);
+      
+      // The response data structure from the service call
+      // Extract the forecast for our specific entity
+      if (response.data[weatherEntity] && response.data[weatherEntity].forecast) {
+        res.json({
+          forecast: response.data[weatherEntity].forecast
+        });
+      } else {
+        console.warn('[WARN] Forecast data structure unexpected');
+        res.json({ forecast: [] });
+      }
+    } else {
+      console.error(`[ERROR] Forecast API returned unexpected status: ${response.status}`);
+      res.status(response.status || 500).json({ 
+        error: 'Failed to fetch forecast data', 
+        details: 'Received unexpected response'
+      });
+    }
+  } catch (error) {
+    console.error('[ERROR] Error fetching forecast data:', error.message);
+    
+    if (error.response) {
+      console.error('[ERROR] Forecast API Response Status:', error.response.status);
+      console.error('[ERROR] Forecast API Response Data:', error.response.data);
+      
+      res.status(error.response.status).json({ 
+        error: 'Failed to fetch forecast data', 
+        details: error.response.data,
+        statusCode: error.response.status
+      });
+    } else if (error.request) {
+      console.error('[ERROR] No response received from forecast API');
+      res.status(500).json({ 
+        error: 'No response received from Home Assistant forecast API', 
+        details: 'Request was made but no response was received'
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to fetch forecast data', 
         details: error.message
       });
     }

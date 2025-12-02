@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.7.2-alpha-6] - 2025-12-02
+
+- **Major header redesign** to match dashboard YAML structure:
+  - Left: Date & Time (day, full date, large time)
+  - Center: Weather icon + current temp/condition/wind + details (humidity, pressure, sunrise, sunset)
+  - Right: 5-day forecast ONLY
+- **Sunrise/sunset times** now fetched from `sun.sun` entity (more accurate)
+- **Weather forecast** now fetched via `weather.get_forecasts` service call
+- Added `/api/sun` endpoint to get sun entity data
+- Added `/api/weather/forecast` endpoint to call get_forecasts service
+- Improved weather details layout with icon + temp side-by-side
+- Enhanced forecast display with proper day names and high/low temps
+- Better responsive design for mobile devices
+
 ## [1.1.7.2-alpha-5] - 2025-12-02
 
 - Redesigned header to match dashboard YAML 3-column layout

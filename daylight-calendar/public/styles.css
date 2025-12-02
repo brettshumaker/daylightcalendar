@@ -318,12 +318,18 @@ header {
   line-height: 1;
 }
 
-/* Center Column - Current Weather (like custom:weather-card) */
-.weather-current {
+/* Center Column - Current Weather with All Details Combined */
+.weather-current-full {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+}
+
+.weather-main-display {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
 }
 
 .weather-icon-large {
@@ -331,40 +337,10 @@ header {
   color: var(--primary-color);
 }
 
-.weather-current-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-}
-
-.weather-detail {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-color);
-  opacity: 0.8;
-}
-
-.weather-detail i {
-  font-size: 1rem;
-  color: var(--primary-color);
-  opacity: 0.7;
-  width: 20px;
-  text-align: center;
-}
-
-/* Right Column - Temperature & Forecast (like weather-forecast) */
-.weather-forecast-section {
+.weather-current-temp {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.current-temp-large {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 0.25rem;
 }
 
@@ -393,6 +369,36 @@ header {
 
 .temp-wind i {
   font-size: 0.9rem;
+}
+
+.weather-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 2rem;
+  font-size: 0.9rem;
+}
+
+.weather-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.weather-detail i {
+  font-size: 1rem;
+  color: var(--primary-color);
+  opacity: 0.7;
+  width: 20px;
+  text-align: center;
+}
+
+/* Right Column - 5-Day Forecast Only */
+.weather-forecast-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 5-Day Forecast Display */
@@ -590,20 +596,20 @@ footer {
     font-size: 1.2em;
   }
   
-  .weather-current {
+  .weather-current-full {
     order: 2;
+  }
+  
+  .weather-main-display {
+    flex-direction: column;
+    gap: 1rem;
   }
   
   .weather-icon-large {
     font-size: 3.5rem;
   }
   
-  .weather-forecast-section {
-    order: 3;
-    align-items: center;
-  }
-  
-  .current-temp-large {
+  .weather-current-temp {
     align-items: center;
   }
   
@@ -611,8 +617,13 @@ footer {
     font-size: 2.5rem;
   }
   
+  .weather-forecast-section {
+    order: 3;
+  }
+  
   .forecast-days {
     justify-content: center;
+    flex-wrap: wrap;
   }
   
   main {

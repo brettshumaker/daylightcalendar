@@ -502,19 +502,8 @@ document.addEventListener('DOMContentLoaded', function() {
           pressureEl.textContent = `${attrs.pressure} ${pressureUnit}`;
         }
         
-        // Update sunrise
-        const sunriseEl = document.getElementById('weather-sunrise');
-        if (sunriseEl && attrs.sunrise) {
-          const sunriseTime = new Date(attrs.sunrise);
-          sunriseEl.textContent = sunriseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        // Update sunset
-        const sunsetEl = document.getElementById('weather-sunset');
-        if (sunsetEl && attrs.sunset) {
-          const sunsetTime = new Date(attrs.sunset);
-          sunsetEl.textContent = sunsetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
+        // Sunrise/sunset are fetched from sun entity separately
+        fetchSunTimes();
         
         // Update wind
         const windEl = document.getElementById('weather-wind');
@@ -539,10 +528,8 @@ document.addEventListener('DOMContentLoaded', function() {
           windEl.querySelector('span').textContent = windText;
         }
         
-        // Display forecast if available
-        if (attrs.forecast && Array.isArray(attrs.forecast)) {
-          displayForecast(attrs.forecast);
-        }
+        // Fetch forecast via service call
+        fetchWeatherForecast();
         
         // Keep the old last updated for compatibility
         let lastUpdated = document.querySelector('.weather .last-updated');
@@ -556,6 +543,45 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => {
         console.error('Error fetching weather data:', error);
+      });
+  }
+  
+  // Fetch sun times from sun entity
+  function fetchSunTimes() {
+    fetch('/api/sun')
+      .then(response => response.json())
+      .then(data => {
+        if (!data || !data.attributes) return;
+        
+        const sunriseEl = document.getElementById('sun-sunrise');
+        const sunsetEl = document.getElementById('sun-sunset');
+        
+        if (sunriseEl && data.attributes.next_rising) {
+          const sunriseTime = new Date(data.attributes.next_rising);
+          sunriseEl.textContent = sunriseTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        
+        if (sunsetEl && data.attributes.next_setting) {
+          const sunsetTime = new Date(data.attributes.next_setting);
+          sunsetEl.textContent = sunsetTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching sun times:', error);
+      });
+  }
+  
+  // Fetch weather forecast using get_forecasts service
+  function fetchWeatherForecast() {
+    fetch('/api/weather/forecast')
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.forecast && Array.isArray(data.forecast)) {
+          displayForecast(data.forecast);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching weather forecast:', error);
       });
   }
   
@@ -644,6 +670,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up periodic refresh
   setInterval(fetchCalendarEvents, 5 * 60 * 1000); // Refresh every 5 minutes
   setInterval(fetchWeather, 15 * 60 * 1000); // Refresh weather every 15 minutes
+  setInterval(fetchSunTimes, 60 * 60 * 1000); // Refresh sun times every hour
+  setInterval(fetchWeatherForecast, 60 * 60 * 1000); // Refresh forecast every hour
   
   // Listen for socket events
   socket.on('calendar_update', () => {
