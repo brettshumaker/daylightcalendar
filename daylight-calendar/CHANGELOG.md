@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.7.2-alpha-13] - 2025-12-02
+
+- **Fixed calendar events not loading** - Updated `/api/calendar` endpoint to fetch events for assigned calendars only (30 days range)
+- **Optimized calendar event fetching** - Only fetch events for calendars assigned to users (reads users.json first)
+- Returns empty array if no calendars are assigned to any users
+- Significantly improves performance when there are many unassigned calendars
+
 ## [1.1.7.2-alpha-12] - 2025-12-02
 
 **Major Feature Release: User-Specific Calendar Management & Custom Calendar Views**

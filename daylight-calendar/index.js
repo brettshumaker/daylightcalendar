@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-12
+// Daylight Calendar v1.1.7.2-alpha-13
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -729,22 +729,78 @@ app.get('/api/calendar', async (req, res) => {
   }
   
   try {
-    console.log(`[INFO] Fetching calendar data from: ${hassApiUrl}/calendars`);
-    console.log(`[INFO] Using token: ${supervisorToken.substring(0, 10)}...`);
-    const response = await axios.get(`${hassApiUrl}/calendars`, { 
+    // Read users to find assigned calendars
+    const usersData = readData('users.json');
+    const assignedCalendarIds = usersData
+      .filter(u => u.calendarEntity)
+      .map(u => u.calendarEntity);
+    
+    console.log(`[INFO] Found ${assignedCalendarIds.length} assigned calendars:`, assignedCalendarIds);
+    
+    if (assignedCalendarIds.length === 0) {
+      console.log('[INFO] No calendars assigned to users, returning empty array');
+      return res.json([]);
+    }
+    
+    // Fetch calendar list to get metadata
+    console.log(`[INFO] Fetching calendar list from: ${hassApiUrl}/calendars`);
+    const calendarsResponse = await axios.get(`${hassApiUrl}/calendars`, { 
       headers: hassHeaders,
-      timeout: 10000 // 10 second timeout
+      timeout: 10000
     });
     
-    if (response.status === 200) {
-      res.json(response.data);
-    } else {
-      console.error(`[ERROR] Calendar API returned status: ${response.status}`);
-      res.status(response.status).json({ 
-        error: 'Failed to fetch calendar data', 
-        statusCode: response.status
+    if (calendarsResponse.status !== 200) {
+      console.error(`[ERROR] Calendar API returned status: ${calendarsResponse.status}`);
+      return res.status(calendarsResponse.status).json({ 
+        error: 'Failed to fetch calendar list', 
+        statusCode: calendarsResponse.status
       });
     }
+    
+    const allCalendars = calendarsResponse.data;
+    
+    // Filter to only assigned calendars
+    const assignedCalendars = allCalendars.filter(cal => 
+      assignedCalendarIds.includes(cal.entity_id)
+    );
+    
+    console.log(`[INFO] Fetching events for ${assignedCalendars.length} assigned calendars`);
+    
+    // Fetch events for only assigned calendars (next 30 days)
+    const now = new Date();
+    const endDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days from now
+    
+    const startParam = now.toISOString();
+    const endParam = endDate.toISOString();
+    
+    const calendarsWithEvents = await Promise.all(
+      assignedCalendars.map(async (calendar) => {
+        try {
+          console.log(`[INFO] Fetching events for calendar: ${calendar.entity_id}`);
+          
+          const eventsUrl = `${hassApiUrl}/calendars/${calendar.entity_id}?start=${startParam}&end=${endParam}`;
+          const eventsResponse = await axios.get(eventsUrl, {
+            headers: hassHeaders,
+            timeout: 10000
+          });
+          
+          return {
+            ...calendar,
+            events: eventsResponse.data || []
+          };
+        } catch (error) {
+          console.error(`[ERROR] Failed to fetch events for ${calendar.entity_id}:`, error.message);
+          return {
+            ...calendar,
+            events: []
+          };
+        }
+      })
+    );
+    
+    console.log(`[INFO] Successfully fetched events for assigned calendars`);
+    res.json(calendarsWithEvents);
+    
   } catch (error) {
     console.error('[ERROR] Error fetching calendar data:', error.message);
     
