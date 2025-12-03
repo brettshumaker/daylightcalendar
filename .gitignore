@@ -85,3 +85,8 @@ docker-compose.override.yml
 .env.test.local
 .env.production.local
 secrets.yaml
+
+# Planning and development docs
+ROADMAP.md
+FEATURES.md
+TODO.md
