@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.7.2-alpha-19] - 2025-12-02
+
+- **Fixed build error** - Removed duplicate `addChoreButton` declaration
+
 ## [1.1.7.2-alpha-18] - 2025-12-02
 
 **Chore Rewards & Editing**

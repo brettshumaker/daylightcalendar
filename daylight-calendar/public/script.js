@@ -54,13 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Add chore button
-  const addChoreButton = document.getElementById('add-chore-button');
-  if (addChoreButton) {
-    addChoreButton.addEventListener('click', () => {
-      openModal('add-chore-modal');
-    });
-  }
 
   // Meal categories button
   const mealCategoriesButton = document.getElementById('meal-categories-button');
