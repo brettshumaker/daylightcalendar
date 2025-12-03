@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-15
+// Daylight Calendar v1.1.7.2-alpha-16
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -208,7 +208,7 @@ app.post('/api/chores', (req, res) => {
       const newChore = {
         id: Date.now().toString(),
         name: req.body.name,
-        assigneeName: req.body.assigneeName,
+        userId: req.body.userId || null, // Store userId instead of name
         dueDate: req.body.dueDate,
         completed: false,
         rewardPoints: req.body.rewardPoints || 10 // Default to 10 points if not specified

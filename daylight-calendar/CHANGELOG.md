@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.7.2-alpha-16] - 2025-12-02
+
+**Fixed Chore Assignment System**
+
+- **Chores now use user IDs** - Changed from `assigneeName` (string) to `userId` (proper reference)
+- **Dynamic assignee dropdown** - Chore assignment dropdown now populates from actual user profiles
+- **User-colored lanes** - Kanban lanes show user's profile color and icon
+- **Proper user lookup** - Chores are now properly associated with user profiles
+- **Handles deleted users** - Gracefully skips chores assigned to deleted users
+- **Backend updated** - POST `/api/chores` now expects `userId` instead of `assigneeName`
+
 ## [1.1.7.2-alpha-15] - 2025-12-02
 
 - **Multi-day event support** - Events spanning multiple days now appear on every day within their range
@@ -27,6 +38,7 @@
 **Major Feature Release: User-Specific Calendar Management & Custom Calendar Views**
 
 ### Calendar Assignment System
+
 - **Added calendar-to-user mapping** - Each user profile can now be assigned a specific Home Assistant calendar
 - **New API endpoint** - `GET /api/calendars/list` fetches available calendars with friendly names
 - **Smart calendar dropdown** - Shows which calendars are already assigned and prevents conflicts
@@ -34,6 +46,7 @@
 - User toggles now only show users with assigned calendars
 
 ### Custom Calendar Views
+
 - **Replaced FullCalendar** - Built custom grid-based calendar for better control and performance
 - **5 view modes** with intelligent date ranges starting from current day:
   - **Today**: Single day column view
@@ -45,6 +58,7 @@
 - **Default view** - Week view on first load
 
 ### Enhanced Event Display
+
 - **User-colored events** - Events automatically colored by their assigned user's profile color
 - **Weather integration** - Each day column shows weather icon and high/low temps from forecast
 - **Past event dimming** - Past events appear grayed out at 20% opacity
@@ -53,12 +67,14 @@
 - **Click to preview** - Clicking events shows details in footer next event section
 
 ### User Filtering with Animation
+
 - **Toggle user events** - Click user icons to show/hide their events
 - **Smooth fade animation** - Events fade out and collapse smoothly when filtered (0.3s CSS transition)
 - **Filter completely removes** - Filtered events disappear from view entirely (not just hidden)
 - **Multi-user filtering** - Filter any combination of users simultaneously
 
 ### Profile Management Enhancements
+
 - **Calendar assignment field** - Added to user profile edit form
 - **Calendar dropdown** - Populated from Home Assistant calendars
 - **Assignment validation** - Prevents assigning the same calendar to multiple users
@@ -66,6 +82,7 @@
 - **Backward compatibility** - Existing users get default values on first load
 
 ### UI/UX Improvements
+
 - **View selector toolbar** - Prominent buttons for switching between calendar views
 - **Improved calendar grid** - Clean, modern card-based event layout matching design system
 - **Responsive day columns** - Flexible layout adapts to different view modes
@@ -74,6 +91,7 @@
 - **No users message** - Helpful message when no calendars are assigned yet
 
 ### Technical Improvements
+
 - **Removed FullCalendar dependency** - Lighter bundle size and better control
 - **localStorage integration** - Persistent view preferences
 - **Event fetching optimization** - Only fetch calendars for users with assignments
@@ -81,6 +99,7 @@
 - **Tab visibility handling** - Calendar re-renders when switching to calendar tab
 
 ### Breaking Changes
+
 - Users without assigned calendars will not appear in the calendar user toggles
 - Old calendar view preferences are not migrated (will default to Week view)
 - Custom FullCalendar themes no longer apply (uses new custom styling)

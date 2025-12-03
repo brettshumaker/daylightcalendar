@@ -976,11 +976,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to fetch and display chores in kanban format
   async function fetchAndDisplayChores() {
     try {
-      const response = await fetch('/api/chores');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Fetch both chores and users
+      const [choresResponse, usersResponse] = await Promise.all([
+        fetch('/api/chores'),
+        fetch('/api/users')
+      ]);
+      
+      if (!choresResponse.ok) {
+        throw new Error(`HTTP error! status: ${choresResponse.status}`);
       }
-      const chores = await response.json();
+      
+      const chores = await choresResponse.json();
+      const users = await usersResponse.json();
       const choreBoard = document.getElementById('chore-board');
       
       if (!choreBoard) {
@@ -997,37 +1004,47 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Group chores by assignee
-      const choresByAssignee = {};
+      // Create a map of userId to user for easy lookup
+      const userMap = {};
+      users.forEach(user => {
+        userMap[user.id] = user;
+      });
       
-      // First, collect all unique assignees
-      const assignees = [...new Set(chores.map(chore => 
-        chore.assigneeName ? chore.assigneeName : 'Unassigned'))];
-        
-      // Create a lane for each assignee
-      assignees.forEach(assignee => {
+      // Get all unique user IDs from chores, plus unassigned
+      const assignedUserIds = [...new Set(chores.map(chore => chore.userId || 'unassigned'))];
+      
+      // Create a lane for each user (only if they have chores) plus unassigned
+      assignedUserIds.forEach(userId => {
+        const user = userId === 'unassigned' ? null : userMap[userId];
         const assigneeChores = chores.filter(chore => 
-          (chore.assigneeName ? chore.assigneeName : 'Unassigned') === assignee);
+          (chore.userId || 'unassigned') === userId
+        );
+        
+        // Skip if user was deleted but chores still reference them
+        if (userId !== 'unassigned' && !user) {
+          console.warn(`Skipping chores for deleted user: ${userId}`);
+          return;
+        }
           
-        const laneId = assignee.toLowerCase().replace(/\s+/g, '-');
+        const userName = user ? user.name : 'Unassigned';
+        const userColor = user ? user.color : '#999999';
+        const userIcon = user ? user.icon : 'fa-user-slash';
+        
+        const laneId = userId === 'unassigned' ? 'unassigned' : `user-${userId}`;
         const lane = document.createElement('div');
         lane.className = `kanban-lane lane-${laneId}`;
+        lane.dataset.userId = userId;
         
         const laneHeader = document.createElement('div');
         laneHeader.className = 'kanban-lane-header';
+        laneHeader.style.borderLeftColor = userColor;
         
         const laneTitle = document.createElement('div');
         laneTitle.className = 'lane-title';
         
-        // Determine icon based on assignee
-        let icon = 'fa-user';
-        if (assignee === 'Unassigned') {
-          icon = 'fa-user-slash';
-        }
-        
         laneTitle.innerHTML = `
-          <i class="fas ${icon}"></i>
-          <span>${assignee}</span>
+          <i class="fas ${userIcon}" style="color: ${userColor}"></i>
+          <span>${userName}</span>
         `;
         
         const laneCount = document.createElement('div');
@@ -1167,13 +1184,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Populate chore assignee dropdown from users
+  async function populateChoreAssigneeDropdown() {
+    try {
+      const response = await fetch('/api/users');
+      const users = await response.json();
+      
+      const assigneeSelect = document.getElementById('assigneeUserId');
+      if (!assigneeSelect) return;
+      
+      // Clear existing options except "Unassigned"
+      assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+      
+      // Add user options
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.textContent = user.name;
+        option.dataset.color = user.color;
+        assigneeSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error loading users for chore assignment:', error);
+    }
+  }
+  
+  // Load users when chore modal opens
+  const addChoreModal = document.getElementById('add-chore-modal');
+  if (addChoreModal) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.target.classList.contains('show')) {
+          populateChoreAssigneeDropdown();
+        }
+      });
+    });
+    observer.observe(addChoreModal, { attributes: true, attributeFilter: ['class'] });
+  }
+
   // Event listener for adding a new chore
   const addChoreForm = document.getElementById('add-chore-form');
   if (addChoreForm) {
     addChoreForm.addEventListener('submit', async function(event) {
       event.preventDefault();
       const choreName = event.target.choreName.value;
-      const assigneeName = event.target.assigneeName.value;
+      const userId = event.target.assigneeUserId.value || null;
       const dueDate = event.target.dueDate.value;
 
       if (!choreName) {
@@ -1187,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', function() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ name: choreName, assigneeName, dueDate }),
+          body: JSON.stringify({ name: choreName, userId, dueDate }),
         });
         if (!response.ok) {
           const errorData = await response.json();
