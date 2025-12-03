@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.7.2-alpha-17] - 2025-12-02
+
+- **Fixed chore completion persistence** - Chore completed/pending status now saves to backend via PATCH request
+- Toggle button now makes API call to `/api/chores/:id` to update `completed` field
+- Status persists across page refreshes and sessions
+
 ## [1.1.7.2-alpha-16] - 2025-12-02
 
 **Fixed Chore Assignment System**

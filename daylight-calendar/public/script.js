@@ -1124,28 +1124,46 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Add event listeners for chore actions
       document.querySelectorAll('.toggle-status-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
+        button.addEventListener('click', async (e) => {
           e.stopPropagation();
           const choreId = button.dataset.id;
           const choreItem = button.closest('.kanban-item');
           const isCompleted = choreItem.classList.contains('completed');
+          const newCompletedStatus = !isCompleted;
           
-          // In a real app, you'd update the status on the server
-          // For now, we just toggle the UI
-          if (isCompleted) {
-            choreItem.classList.remove('completed');
-            button.innerHTML = '<i class="fas fa-check"></i>';
-            choreItem.querySelector('.status-badge').textContent = 'Pending';
-            choreItem.querySelector('.status-badge').className = 'status-badge pending';
-          } else {
-            choreItem.classList.add('completed');
-            button.innerHTML = '<i class="fas fa-undo"></i>';
-            choreItem.querySelector('.status-badge').textContent = 'Done';
-            choreItem.querySelector('.status-badge').className = 'status-badge done';
+          try {
+            // Update status on the server
+            const response = await fetch(`/api/chores/${choreId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ completed: newCompletedStatus }),
+            });
             
-            if (hideCompleted) {
-              choreItem.style.display = 'none';
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
+            // Update UI after successful save
+            if (newCompletedStatus) {
+              choreItem.classList.add('completed');
+              button.innerHTML = '<i class="fas fa-undo"></i>';
+              choreItem.querySelector('.status-badge').textContent = 'Done';
+              choreItem.querySelector('.status-badge').className = 'status-badge done';
+              
+              if (hideCompleted) {
+                choreItem.style.display = 'none';
+              }
+            } else {
+              choreItem.classList.remove('completed');
+              button.innerHTML = '<i class="fas fa-check"></i>';
+              choreItem.querySelector('.status-badge').textContent = 'Pending';
+              choreItem.querySelector('.status-badge').className = 'status-badge pending';
+            }
+          } catch (error) {
+            console.error('Error toggling chore status:', error);
+            alert('Failed to update chore status. Please try again.');
           }
         });
       });
