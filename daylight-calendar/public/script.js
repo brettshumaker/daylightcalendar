@@ -401,10 +401,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const eventsContainer = document.createElement('div');
       eventsContainer.className = 'day-events';
       
-      // Filter events for this day
+      // Filter events for this day (including multi-day events that span this day)
       const eventsForDay = allCalendarEvents.filter(event => {
         const eventStart = moment(event.start);
-        return eventStart.isSame(day, 'day');
+        const eventEnd = moment(event.end || event.start);
+        
+        // Check if this day falls within the event's date range
+        return day.isBetween(eventStart, eventEnd, 'day', '[]'); // inclusive on both ends
       });
       
       if (eventsForDay.length === 0) {
@@ -414,7 +417,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Sort events by start time
         eventsForDay.sort((a, b) => moment(a.start).diff(moment(b.start)));
         
-        eventsForDay.forEach(event => {
+        // Deduplicate events (in case same event appears multiple times)
+        const seenEvents = new Set();
+        const uniqueEvents = eventsForDay.filter(event => {
+          const eventKey = `${event.userId}-${event.title}-${event.start}`;
+          if (seenEvents.has(eventKey)) {
+            return false;
+          }
+          seenEvents.add(eventKey);
+          return true;
+        });
+        
+        uniqueEvents.forEach(event => {
           const eventEl = document.createElement('div');
           eventEl.className = 'calendar-event';
           eventEl.style.backgroundColor = event.userColor;
@@ -431,20 +445,41 @@ document.addEventListener('DOMContentLoaded', function() {
             eventEl.classList.add('all-day');
           }
           
-          // Event time
+          // Event time/duration display
+          const timeEl = document.createElement('div');
+          timeEl.className = 'event-time';
+          
           if (!event.allDay) {
-            const timeEl = document.createElement('div');
-            timeEl.className = 'event-time';
             const startTime = moment(event.start).format('HH:mm');
             const endTime = event.end ? ` - ${moment(event.end).format('HH:mm')}` : '';
             timeEl.textContent = `${startTime}${endTime}`;
-            eventEl.appendChild(timeEl);
           } else {
-            const timeEl = document.createElement('div');
-            timeEl.className = 'event-time';
-            timeEl.textContent = 'Entire day';
-            eventEl.appendChild(timeEl);
+            // For all-day events, check if it's multi-day
+            const eventStart = moment(event.start);
+            const eventEnd = moment(event.end || event.start);
+            const eventDuration = eventEnd.diff(eventStart, 'days') + 1;
+            
+            if (eventDuration > 1) {
+              // Multi-day event - add indicator
+              const dayNumber = day.diff(eventStart, 'days') + 1;
+              
+              if (dayNumber === 1) {
+                // First day - show date range
+                timeEl.textContent = `${eventStart.format('MMM D')} - ${eventEnd.format('MMM D')}`;
+              } else if (dayNumber === eventDuration) {
+                // Last day
+                timeEl.textContent = `Final day`;
+              } else {
+                // Middle day
+                timeEl.textContent = `Day ${dayNumber} of ${eventDuration}`;
+              }
+            } else {
+              // Single day all-day event
+              timeEl.textContent = 'All day';
+            }
           }
+          
+          eventEl.appendChild(timeEl);
           
           // Event title
           const titleEl = document.createElement('div');

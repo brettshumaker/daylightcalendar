@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.7.2-alpha-15] - 2025-12-02
+
+- **Multi-day event support** - Events spanning multiple days now appear on every day within their range
+- **Smart day indicators** - Multi-day all-day events show:
+  - First day: Date range (e.g., "Dec 22 - Jan 2")
+  - Middle days: Progress (e.g., "Day 5 of 11")
+  - Final day: "Final day"
+- Single-day all-day events show "All day"
+- Added event deduplication to prevent duplicates on same day
+- Uses existing border styling (no visual changes to borders)
+
 ## [1.1.7.2-alpha-14] - 2025-12-02
 
 - **Fixed readData error** - Fixed undefined function error in calendar endpoint
