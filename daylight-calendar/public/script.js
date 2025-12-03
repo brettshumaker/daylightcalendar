@@ -1099,14 +1099,28 @@ document.addEventListener('DOMContentLoaded', function() {
           
           itemMeta.innerHTML = dueHtml + statusHtml;
           
+          // Reward points badge
+          if (chore.rewardPoints && chore.rewardPoints > 0) {
+            const rewardBadge = document.createElement('div');
+            rewardBadge.className = 'item-reward';
+            rewardBadge.innerHTML = `
+              <i class="fas fa-star"></i>
+              <span>${chore.rewardPoints} pts</span>
+            `;
+            itemMeta.appendChild(rewardBadge);
+          }
+          
           const itemActions = document.createElement('div');
           itemActions.className = 'item-actions';
           
           itemActions.innerHTML = `
-            <button class="toggle-status-btn" data-id="${chore.id}">
+            <button class="edit-chore-btn" data-id="${chore.id}" title="Edit chore">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="toggle-status-btn" data-id="${chore.id}" title="${chore.completed ? 'Mark as pending' : 'Mark as complete'}">
               <i class="fas ${chore.completed ? 'fa-undo' : 'fa-check'}"></i>
             </button>
-            <button class="delete-btn" data-id="${chore.id}">
+            <button class="delete-btn" data-id="${chore.id}" title="Delete chore">
               <i class="fas fa-trash-alt"></i>
             </button>
           `;
@@ -1120,6 +1134,24 @@ document.addEventListener('DOMContentLoaded', function() {
         lane.appendChild(laneHeader);
         lane.appendChild(items);
         choreBoard.appendChild(lane);
+      });
+      
+      // Add event listeners for edit buttons
+      document.querySelectorAll('.edit-chore-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const choreId = button.dataset.id;
+          
+          // Find the chore data
+          const chore = chores.find(c => c.id === choreId);
+          if (!chore) {
+            console.error('Chore not found:', choreId);
+            return;
+          }
+          
+          // Open the modal in edit mode
+          openChoreEditModal(chore);
+        });
       });
       
       // Add event listeners for chore actions
@@ -1227,27 +1259,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Load users when chore modal opens
-  const addChoreModal = document.getElementById('add-chore-modal');
-  if (addChoreModal) {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.target.classList.contains('show')) {
-          populateChoreAssigneeDropdown();
-        }
-      });
+  // Open chore edit modal (for adding or editing)
+  async function openChoreEditModal(chore = null) {
+    const modal = document.getElementById('add-chore-modal');
+    const modalTitle = modal.querySelector('.modal-header h3');
+    const submitBtn = document.getElementById('chore-submit-btn');
+    const submitText = document.getElementById('chore-submit-text');
+    const submitIcon = submitBtn.querySelector('i');
+    const form = document.getElementById('add-chore-form');
+    
+    // Populate users dropdown
+    await populateChoreAssigneeDropdown();
+    
+    if (chore) {
+      // Edit mode
+      modalTitle.textContent = 'Edit Chore';
+      submitText.textContent = 'Save Changes';
+      submitIcon.className = 'fas fa-save';
+      
+      // Populate form with chore data
+      document.getElementById('choreId').value = chore.id;
+      document.getElementById('choreName').value = chore.name;
+      document.getElementById('assigneeUserId').value = chore.userId || '';
+      document.getElementById('dueDate').value = chore.dueDate || '';
+      document.getElementById('rewardPoints').value = chore.rewardPoints || 10;
+    } else {
+      // Add mode
+      modalTitle.textContent = 'Add New Chore';
+      submitText.textContent = 'Add Chore';
+      submitIcon.className = 'fas fa-plus-circle';
+      
+      // Reset form
+      form.reset();
+      document.getElementById('choreId').value = '';
+      document.getElementById('rewardPoints').value = 10;
+    }
+    
+    // Open modal
+    modal.classList.add('show');
+  }
+  
+  // Open chore modal for adding new chore
+  const addChoreButton = document.querySelector('[data-target="add-chore-modal"]');
+  if (addChoreButton) {
+    addChoreButton.addEventListener('click', () => {
+      openChoreEditModal(null);
     });
-    observer.observe(addChoreModal, { attributes: true, attributeFilter: ['class'] });
   }
 
-  // Event listener for adding a new chore
+  // Event listener for adding/editing a chore
   const addChoreForm = document.getElementById('add-chore-form');
   if (addChoreForm) {
     addChoreForm.addEventListener('submit', async function(event) {
       event.preventDefault();
+      
+      const choreId = event.target.choreId.value;
       const choreName = event.target.choreName.value;
       const userId = event.target.assigneeUserId.value || null;
       const dueDate = event.target.dueDate.value;
+      const rewardPoints = parseInt(event.target.rewardPoints.value, 10) || 10;
 
       if (!choreName) {
         alert('Chore name is required.');
@@ -1255,13 +1325,34 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       try {
-        const response = await fetch('/api/chores', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: choreName, userId, dueDate }),
-        });
+        const choreData = {
+          name: choreName,
+          userId,
+          dueDate,
+          rewardPoints
+        };
+        
+        let response;
+        if (choreId) {
+          // Editing existing chore
+          response = await fetch(`/api/chores/${choreId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(choreData),
+          });
+        } else {
+          // Adding new chore
+          response = await fetch('/api/chores', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(choreData),
+          });
+        }
+        
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
@@ -1276,8 +1367,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the form
         event.target.reset();
       } catch (error) {
-        console.error('Error adding chore:', error);
-        alert(`Failed to add chore: ${error.message}`);
+        console.error(`Error ${choreId ? 'updating' : 'adding'} chore:`, error);
+        alert(`Failed to ${choreId ? 'update' : 'add'} chore: ${error.message}`);
       }
     });
   }

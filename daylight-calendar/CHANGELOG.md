@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.7.2-alpha-18] - 2025-12-02
+
+**Chore Rewards & Editing**
+
+- **Added reward points system** - Chores can now have reward points assigned (default: 10 points)
+- **Reward points input** - New field in chore form to set custom reward value
+- **Reward display** - Chore cards show gold badge with star icon and points (e.g., "⭐ 15 pts")
+- **Edit chore functionality** - Added edit button to chore cards
+- **Smart modal** - Same form for adding and editing, automatically populates existing data
+- **Form improvements**:
+  - Hidden choreId field tracks which chore is being edited
+  - Submit button changes text/icon based on mode (Add vs Save)
+  - Modal title updates (Add New Chore vs Edit Chore)
+- **Backend integration** - Uses PATCH `/api/chores/:id` for updates
+- **Visual polish** - Tooltips on action buttons, gold/orange reward badge styling
+
 ## [1.1.7.2-alpha-17] - 2025-12-02
 
 - **Fixed chore completion persistence** - Chore completed/pending status now saves to backend via PATCH request

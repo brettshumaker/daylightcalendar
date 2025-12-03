@@ -1364,6 +1364,8 @@ footer {
   align-items: center;
   font-size: 0.85rem;
   color: #666;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .item-due {
@@ -1375,6 +1377,22 @@ footer {
 .item-due.overdue {
   color: var(--danger-color);
   font-weight: 500;
+}
+
+.item-reward {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #ffd700;
+  color: #333;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.item-reward i {
+  color: #f39c12;
 }
 
 .item-actions {
