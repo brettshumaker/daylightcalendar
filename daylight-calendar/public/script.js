@@ -1275,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('choreName').value = chore.name;
       document.getElementById('assigneeUserId').value = chore.userId || '';
       document.getElementById('dueDate').value = chore.dueDate || '';
-      document.getElementById('rewardPoints').value = chore.rewardPoints || 10;
+      document.getElementById('rewardPoints').value = chore.rewardPoints !== undefined ? chore.rewardPoints : 0;
     } else {
       // Add mode
       modalTitle.textContent = 'Add New Chore';
@@ -1285,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Reset form
       form.reset();
       document.getElementById('choreId').value = '';
-      document.getElementById('rewardPoints').value = 10;
+      document.getElementById('rewardPoints').value = 0;
     }
     
     // Open modal
@@ -1310,7 +1310,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const choreName = event.target.choreName.value;
       const userId = event.target.assigneeUserId.value || null;
       const dueDate = event.target.dueDate.value;
-      const rewardPoints = parseInt(event.target.rewardPoints.value, 10) || 10;
+      const rewardPointsValue = event.target.rewardPoints.value;
+      const rewardPoints = rewardPointsValue === '' ? 0 : parseInt(rewardPointsValue, 10);
 
       if (!choreName) {
         alert('Chore name is required.');

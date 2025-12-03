@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7.2-alpha-20] - 2025-12-02
+
+- **Made reward points optional** - Chores can now have 0 reward points
+- Changed default reward points from 10 to 0
+- Label updated to "Reward Points (optional)"
+- Description clarifies: "0 = no reward"
+- Reward badge only displays when points > 0
+
 ## [1.1.7.2-alpha-19] - 2025-12-02
 
 - **Fixed build error** - Removed duplicate `addChoreButton` declaration
