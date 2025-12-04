@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.8.0-alpha-27] - 2025-12-04
+
+**Debugging & Error Handling**
+
+- Added detailed error logging for iCloud authentication
+- Improved Python script error handling with try/catch wrapper
+- Added console logging to trace authentication flow
+- Better error messages returned to frontend
+
 ## [1.1.8.0-alpha-26] - 2025-12-04
 
 **Cryptography Version Fix**

@@ -130,31 +130,42 @@ def check_session(apple_id, password, cookie_directory):
         }
 
 if __name__ == "__main__":
-    # Read command from stdin
-    command_data = json.loads(sys.stdin.read())
+    try:
+        # Read command from stdin
+        command_data = json.loads(sys.stdin.read())
+        
+        command = command_data.get("command")
+        apple_id = command_data.get("apple_id")
+        password = command_data.get("password")
+        cookie_directory = command_data.get("cookie_directory")
+        
+        result = None
+        
+        if command == "authenticate":
+            result = authenticate(apple_id, password, cookie_directory)
+        elif command == "validate_2fa":
+            code = command_data.get("code")
+            result = validate_2fa_code(apple_id, password, cookie_directory, code)
+        elif command == "check_session":
+            result = check_session(apple_id, password, cookie_directory)
+        else:
+            result = {
+                "success": False,
+                "error": "Unknown command",
+                "message": f"Command '{command}' is not recognized"
+            }
+        
+        # Output result as JSON
+        print(json.dumps(result))
+        sys.exit(0 if result.get("success", False) else 1)
     
-    command = command_data.get("command")
-    apple_id = command_data.get("apple_id")
-    password = command_data.get("password")
-    cookie_directory = command_data.get("cookie_directory")
-    
-    result = None
-    
-    if command == "authenticate":
-        result = authenticate(apple_id, password, cookie_directory)
-    elif command == "validate_2fa":
-        code = command_data.get("code")
-        result = validate_2fa_code(apple_id, password, cookie_directory, code)
-    elif command == "check_session":
-        result = check_session(apple_id, password, cookie_directory)
-    else:
-        result = {
+    except Exception as e:
+        # Catch any unhandled exceptions and return as JSON
+        error_result = {
             "success": False,
-            "error": "Unknown command",
-            "message": f"Command '{command}' is not recognized"
+            "error": str(type(e).__name__),
+            "message": str(e)
         }
-    
-    # Output result as JSON
-    print(json.dumps(result))
-    sys.exit(0 if result.get("success", False) else 1)
+        print(json.dumps(error_result))
+        sys.exit(1)
 

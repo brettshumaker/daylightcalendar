@@ -1,5 +1,5 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.15
-ARG BUILD_VERSION=1.1.8.0-alpha-26
+ARG BUILD_VERSION=1.1.8.0-alpha-27
 FROM ${BUILD_FROM}
 
 # Install required packages

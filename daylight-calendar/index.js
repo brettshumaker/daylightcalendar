@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-26
+// Daylight Calendar v1.1.8.0-alpha-27
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1315,6 +1315,7 @@ app.post('/api/icloud/authenticate', async (req, res) => {
   }
   
   try {
+    console.log('[INFO] Attempting iCloud authentication...');
     const result = await runPythonScript('icloud_auth.py', {
       command: 'authenticate',
       apple_id: appleId,
@@ -1322,7 +1323,10 @@ app.post('/api/icloud/authenticate', async (req, res) => {
       cookie_directory: icloudCookieDir
     });
     
+    console.log('[INFO] iCloud auth result:', JSON.stringify(result));
+    
     if (result.requires_2fa) {
+      console.log('[INFO] 2FA required');
       return res.json({
         success: false,
         requires2fa: true,
@@ -1331,6 +1335,7 @@ app.post('/api/icloud/authenticate', async (req, res) => {
     }
     
     if (result.success) {
+      console.log('[INFO] Authentication successful, saving settings');
       // Save credentials to settings
       const settingsPath = getDataPath('icloud-settings.json');
       const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
@@ -1347,10 +1352,12 @@ app.post('/api/icloud/authenticate', async (req, res) => {
       });
     }
     
+    console.log('[ERROR] Authentication failed:', result);
     res.status(401).json(result);
   } catch (error) {
     console.error('[ERROR] iCloud authentication error:', error);
-    res.status(500).json({ error: 'Authentication failed', details: error.message });
+    console.error('[ERROR] Error details:', JSON.stringify(error, null, 2));
+    res.status(500).json({ error: 'Authentication failed', details: error.message, fullError: String(error) });
   }
 });
 
