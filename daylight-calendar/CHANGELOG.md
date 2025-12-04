@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.8.0-alpha-24] - 2025-12-04
+
+**Build Fix**
+- Added BUILD_VERSION ARG to Dockerfile to fix undefined variable warning
+- Fixed Dockerfile to avoid distutils packaging conflict
+- Simplified pip upgrade to use --ignore-installed flag
+- Install icloudpd without upgrading setuptools/wheel to avoid Alpine Linux package conflicts
+
+## [1.1.8.0-alpha-23] - 2025-12-04
+
+**Build Fix**
+- Fixed Dockerfile to avoid distutils packaging conflict
+- Simplified pip upgrade to use --ignore-installed flag
+- Install icloudpd without upgrading setuptools/wheel to avoid Alpine Linux package conflicts
+
 ## [1.1.8.0-alpha-22] - 2025-12-04
 
 **Build Fix**
