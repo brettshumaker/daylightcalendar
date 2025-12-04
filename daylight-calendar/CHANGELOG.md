@@ -1,13 +1,23 @@
 # Changelog
 
+## [1.1.8.0-alpha-33] - 2025-12-04
+
+**Album Browser & Sync Fixes**
+
+- Added "Browse Albums" button to list and select albums
+- Added `/api/icloud/albums` endpoint to fetch album list
+- Fixed credential saving - now saves when 2FA is required (was causing 400 error)
+- Added logging to icloud_sync.py for debugging photo sync
+- Album selection UI with clickable list
+
 ## [1.1.8.0-alpha-32] - 2025-12-04
 
-**Debug 2FA Validation**
+**Debug 2FA Validation & Critical Fix**
 
+- **FIXED:** Credentials now saved when 2FA is required (was causing "credentials not found" error)
 - Added logging to 2FA validation endpoint
 - Will show what's received in request body
 - Will show if credentials are present in settings
-- This will identify why 400 error is returned
 
 ## [1.1.8.0-alpha-31] - 2025-12-04
 
