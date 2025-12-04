@@ -1,16 +1,11 @@
 # Changelog
 
-## [1.1.8.0-alpha-24] - 2025-12-04
-
-**Build Fix**
-- Added BUILD_VERSION ARG to Dockerfile to fix undefined variable warning
-- Fixed Dockerfile to avoid distutils packaging conflict
-- Simplified pip upgrade to use --ignore-installed flag
-- Install icloudpd without upgrading setuptools/wheel to avoid Alpine Linux package conflicts
-
 ## [1.1.8.0-alpha-23] - 2025-12-04
 
 **Build Fix**
+
+- Added BUILD_VERSION ARG to Dockerfile to fix undefined variable warning
+- Fixed Dockerfile to avoid distutils packaging conflict
 - Fixed Dockerfile to avoid distutils packaging conflict
 - Simplified pip upgrade to use --ignore-installed flag
 - Install icloudpd without upgrading setuptools/wheel to avoid Alpine Linux package conflicts
@@ -18,6 +13,7 @@
 ## [1.1.8.0-alpha-22] - 2025-12-04
 
 **Build Fix**
+
 - Fixed Dockerfile to properly install icloudpd by upgrading pip/setuptools/wheel first
 - Resolved TOML parser error during Python dependency installation
 
@@ -28,6 +24,7 @@
 Major new feature: Display photos from your iCloud shared albums as a beautiful screensaver when the display dims!
 
 ### New Features
+
 - **iCloud Integration**
   - Secure authentication with Apple ID and password
   - Two-factor authentication (2FA) support
@@ -68,6 +65,7 @@ Major new feature: Display photos from your iCloud shared albums as a beautiful 
   - 2FA modal for authentication
 
 ### Technical Implementation
+
 - Added Python scripts for iCloud authentication and photo syncing
 - Integrated `icloudpd` for photo downloading
 - Added image resizing with Pillow
@@ -76,10 +74,12 @@ Major new feature: Display photos from your iCloud shared albums as a beautiful 
 - Session monitoring system
 
 ### Dependencies Added
+
 - Python: `icloudpd`, `pyicloud`, `Pillow`, `py3-pillow`, `jpeg-dev`, `zlib-dev`
 - Node.js: `python-shell`, `sharp`
 
 ### Files Added
+
 - `icloud_auth.py` - Authentication and session management
 - `icloud_sync.py` - Photo syncing logic
 - `resize_images.py` - Image optimization
