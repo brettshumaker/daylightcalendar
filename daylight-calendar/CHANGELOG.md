@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.8.0-alpha-26] - 2025-12-04
+
+**Cryptography Version Fix**
+
+- Upgraded `cryptography` package to version 40+ to fix import errors
+- Removed Alpine's old `py3-cryptography` (v3.3.2) package
+- Added build dependencies for compiling cryptography from source
+- Fixed ImportError: cannot import name 'types' from cryptography
+
 ## [1.1.8.0-alpha-25] - 2025-12-04
 
 **Dependency Fix**

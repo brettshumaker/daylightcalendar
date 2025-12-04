@@ -1,5 +1,5 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.15
-ARG BUILD_VERSION=1.1.8.0-alpha-25
+ARG BUILD_VERSION=1.1.8.0-alpha-26
 FROM ${BUILD_FROM}
 
 # Install required packages
@@ -18,13 +18,17 @@ RUN apk add --no-cache \
     chromium \
     py3-pillow \
     py3-requests \
-    py3-cryptography \
     jpeg-dev \
-    zlib-dev
+    zlib-dev \
+    libffi-dev \
+    openssl-dev \
+    gcc \
+    musl-dev
 
 # Upgrade pip and install Python dependencies for iCloud photo syncing
-# Upgrade pip first, then install pyicloud and icloudpd
+# Upgrade pip first, then install cryptography (newer version needed) and pyicloud/icloudpd
 RUN pip3 install --no-cache-dir --upgrade --ignore-installed pip && \
+    pip3 install --no-cache-dir --upgrade 'cryptography>=40.0.0' && \
     pip3 install --no-cache-dir pyicloud 'icloudpd>=1.17.3' six pytz tzlocal
 
 # Copy S6 overlay and other rootfs items
