@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-32
+// Daylight Calendar v1.1.8.0-alpha-33
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1477,6 +1477,32 @@ app.post('/api/icloud/validate-2fa', async (req, res) => {
   } catch (error) {
     console.error('[ERROR] 2FA validation error:', error);
     res.status(500).json({ error: 'Validation failed', details: error.message });
+  }
+});
+
+// GET list available iCloud albums
+app.get('/api/icloud/albums', async (req, res) => {
+  try {
+    console.log('[INFO] Fetching iCloud albums list...');
+    const settingsPath = getDataPath('icloud-settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    
+    if (!settings.enabled || !settings.appleId || !settings.password) {
+      return res.status(400).json({ error: 'Not authenticated with iCloud' });
+    }
+    
+    const result = await runPythonScript('icloud_sync.py', {
+      command: 'list_albums',
+      apple_id: settings.appleId,
+      password: settings.password,
+      cookie_directory: icloudCookieDir
+    });
+    
+    console.log('[INFO] Albums result:', result);
+    res.json(result);
+  } catch (error) {
+    console.error('[ERROR] Error listing albums:', error);
+    res.status(500).json({ error: 'Failed to list albums', details: error.message });
   }
 });
 

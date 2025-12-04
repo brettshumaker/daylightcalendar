@@ -11,13 +11,21 @@ import subprocess
 import time
 from datetime import datetime
 
+# Helper function to log to stderr
+def log(message):
+    print(f"[Python Sync] {message}", file=sys.stderr, flush=True)
+
 def sync_photos(apple_id, password, cookie_directory, output_directory, album_name=None):
     """
     Sync photos from iCloud using icloudpd command-line tool.
     """
     try:
+        log(f"Starting photo sync to {output_directory}")
+        log(f"Album filter: {album_name if album_name else 'All Photos'}")
+        
         # Ensure output directory exists
         os.makedirs(output_directory, exist_ok=True)
+        log(f"Output directory ready")
         
         # Build icloudpd command
         cmd = [
@@ -36,6 +44,10 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
         # Add album filter if specified
         if album_name:
             cmd.extend(["--album", album_name])
+            log(f"Added album filter: {album_name}")
+        
+        log(f"Running icloudpd command...")
+        log(f"Command: {' '.join(cmd[:8])}... (password hidden)")
         
         # Run icloudpd
         result = subprocess.run(
@@ -85,6 +97,7 @@ def list_albums(apple_id, password, cookie_directory):
     List available albums from iCloud.
     """
     try:
+        log("Listing iCloud albums...")
         cmd = [
             "icloudpd",
             "--username", apple_id,

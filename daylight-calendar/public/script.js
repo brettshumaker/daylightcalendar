@@ -3765,6 +3765,7 @@ async function initializeiCloudSettings() {
   document.getElementById('icloud-sync-now-btn').addEventListener('click', synciCloudPhotos);
   document.getElementById('icloud-clear-cache-btn').addEventListener('click', cleariCloudCache);
   document.getElementById('icloud-verify-2fa-btn').addEventListener('click', verifyiCloud2FA);
+  document.getElementById('icloud-list-albums-btn').addEventListener('click', listAlbums);
   
   // Modal close buttons
   document.querySelectorAll('#icloud-2fa-modal .modal-close').forEach(btn => {
@@ -4098,6 +4099,45 @@ async function cleariCloudCache() {
     btn.classList.remove('loading');
     btn.disabled = false;
   }
+}
+
+async function listAlbums() {
+  const btn = document.getElementById('icloud-list-albums-btn');
+  const albumsList = document.getElementById('icloud-albums-list');
+  
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/albums');
+    const result = await response.json();
+    
+    if (result.success && result.albums && result.albums.length > 0) {
+      albumsList.innerHTML = result.albums.map(album => 
+        `<div class="album-item" style="padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #eee;" 
+              onclick="selectAlbum('${album.replace(/'/g, "\\'")}')">
+          <i class="fas fa-folder"></i> ${album}
+        </div>`
+      ).join('');
+      albumsList.style.display = 'block';
+    } else {
+      alert('No albums found or failed to fetch albums');
+    }
+  } catch (error) {
+    console.error('Error listing albums:', error);
+    alert('Failed to list albums');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// Make selectAlbum global so it can be called from inline onclick
+window.selectAlbum = function(albumName) {
+  document.getElementById('icloud-album-name').value = albumName;
+  document.getElementById('icloud-albums-list').style.display = 'none';
+  // Auto-save the setting
+  saveiCloudSettings();
 }
 
 // ============================================================================

@@ -787,9 +787,17 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="icloud-album-name">Shared Album Name</label>
-                  <input type="text" id="icloud-album-name" placeholder="Calendar Screensaver"
-                    value="Calendar Screensaver">
+                  <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="icloud-album-name" placeholder="Calendar Screensaver"
+                      value="Calendar Screensaver" style="flex: 1;">
+                    <button id="icloud-list-albums-btn" class="btn btn-secondary" type="button">
+                      <i class="fas fa-list"></i> Browse
+                    </button>
+                  </div>
                   <p class="setting-description">Name of the shared iCloud Photos album to sync from.</p>
+                  <div id="icloud-albums-list" style="display: none; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                    <!-- Albums will be populated here -->
+                  </div>
                 </div>
               </div>
 
