@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.8.0-alpha-34] - 2025-12-04
+
+**Album List & Sync Debugging Improvements**
+
+- Fixed album list to filter out icloudpd log lines (INFO/DEBUG/etc)
+- Fixed password redaction in logs (was showing plaintext)
+- Added detailed sync logging to troubleshoot why photos aren't downloading
+- Added UI note that SHARED albums are required (not regular albums)
+- Improved album parsing to only show actual album names
+- Added stdout/stderr preview logging for sync operations
+
 ## [1.1.8.0-alpha-33] - 2025-12-04
 
 **Album Browser & Sync Fixes**

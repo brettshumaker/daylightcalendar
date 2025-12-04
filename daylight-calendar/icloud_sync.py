@@ -28,6 +28,8 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
         log(f"Output directory ready")
         
         # Build icloudpd command
+        # NOTE: icloudpd only downloads from ALL photos or specific SHARED albums
+        # Regular albums cannot be downloaded individually
         cmd = [
             "icloudpd",
             "--username", apple_id,
@@ -41,13 +43,20 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
             "--threads-num", "3"  # Use 3 threads for faster download
         ]
         
-        # Add album filter if specified
+        # Add album filter if specified (must be a SHARED album)
         if album_name:
             cmd.extend(["--album", album_name])
-            log(f"Added album filter: {album_name}")
+            log(f"Added shared album filter: {album_name}")
+        else:
+            log("No album specified - will download from All Photos")
         
         log(f"Running icloudpd command...")
-        log(f"Command: {' '.join(cmd[:8])}... (password hidden)")
+        # Actually hide the password in logs
+        safe_cmd = cmd.copy()
+        if '--password' in safe_cmd:
+            pwd_idx = safe_cmd.index('--password')
+            safe_cmd[pwd_idx + 1] = '*****'
+        log(f"Command: {' '.join(safe_cmd)}")
         
         # Run icloudpd
         result = subprocess.run(
@@ -57,8 +66,19 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
             timeout=300  # 5 minute timeout
         )
         
+        log(f"icloudpd completed with return code: {result.returncode}")
+        log(f"icloudpd stdout length: {len(result.stdout)} chars")
+        log(f"icloudpd stderr length: {len(result.stderr)} chars")
+        
+        # Log first 500 chars of output for debugging
+        if result.stdout:
+            log(f"stdout preview: {result.stdout[:500]}")
+        if result.stderr:
+            log(f"stderr preview: {result.stderr[:500]}")
+        
         # Check for authentication errors
         if "authentication failed" in result.stderr.lower() or "2fa" in result.stderr.lower():
+            log("Authentication error detected in stderr")
             return {
                 "success": False,
                 "error": "Authentication required",
@@ -70,13 +90,15 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
         photo_files = [f for f in os.listdir(output_directory) 
                       if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))]
         
+        log(f"Found {len(photo_files)} photos in output directory")
+        
         return {
             "success": True,
             "message": f"Successfully synced {len(photo_files)} photos",
             "photo_count": len(photo_files),
             "synced_at": datetime.now().isoformat(),
-            "stdout": result.stdout,
-            "stderr": result.stderr if result.returncode != 0 else None
+            "stdout": result.stdout[:1000] if result.stdout else None,  # Limit stdout size
+            "stderr": result.stderr[:1000] if result.returncode != 0 and result.stderr else None
         }
         
     except subprocess.TimeoutExpired:
@@ -113,12 +135,37 @@ def list_albums(apple_id, password, cookie_directory):
             timeout=30
         )
         
-        # Parse album names from output
+        log(f"icloudpd output received, parsing albums...")
+        
+        # Parse album names from output, filtering out log lines
         albums = []
+        in_albums_section = False
+        
         for line in result.stdout.split('\n'):
             line = line.strip()
-            if line and not line.startswith('-'):
+            
+            # Skip empty lines
+            if not line:
+                continue
+            
+            # Skip log lines (INFO, DEBUG, WARNING, ERROR)
+            if any(level in line for level in ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'Processing user']):
+                continue
+            
+            # Mark when we reach the "Albums:" header
+            if line == 'Albums:':
+                in_albums_section = True
+                continue
+            
+            # Skip separator lines
+            if line.startswith('-'):
+                continue
+            
+            # Only add lines after "Albums:" header
+            if in_albums_section:
                 albums.append(line)
+        
+        log(f"Found {len(albums)} albums after filtering")
         
         return {
             "success": True,
