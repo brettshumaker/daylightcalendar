@@ -40,9 +40,7 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
             "--skip-videos",  # Skip videos by default to save space
             "--skip-live-photos",  # Skip live photos
             "--no-progress-bar",  # Disable progress bar for cleaner output
-            "--folder-structure", "none",  # Don't create subdirectories - flat structure
-            "--convert-to-jpeg",  # Download JPG versions instead of HEIC
-            "--jpeg-quality", "90"  # High quality JPG
+            "--folder-structure", "none"  # Don't create subdirectories - flat structure
         ]
         
         # Add album filter if specified (must be a SHARED album)
@@ -88,11 +86,11 @@ def sync_photos(apple_id, password, cookie_directory, output_directory, album_na
                 "stderr": result.stderr
             }
         
-        # Count downloaded photos (flat structure)
+        # Count downloaded photos (flat structure, including HEIC before conversion)
         photo_files = [f for f in os.listdir(output_directory) 
-                      if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                      if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic', '.heif'))]
         
-        log(f"Found {len(photo_files)} photos in output directory")
+        log(f"Found {len(photo_files)} photos in output directory (HEIC will be converted to JPG)")
         
         return {
             "success": True,

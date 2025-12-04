@@ -10,6 +10,13 @@ import os
 from PIL import Image
 from pathlib import Path
 
+# Register HEIC support
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass  # HEIC support not available
+
 def resize_image(input_path, output_path, max_width, max_height, quality=85):
     """
     Resize an image while maintaining aspect ratio.
@@ -61,8 +68,8 @@ def resize_directory(input_dir, output_dir, max_width, max_height, quality=85):
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
         
-        # Supported image extensions (icloudpd converts to JPG for us)
-        image_extensions = {'.jpg', '.jpeg', '.png'}
+        # Supported image extensions (including HEIC which we'll convert)
+        image_extensions = {'.jpg', '.jpeg', '.png', '.heic', '.heif'}
         
         # Process each image
         for filename in os.listdir(input_dir):
@@ -76,21 +83,34 @@ def resize_directory(input_dir, output_dir, max_width, max_height, quality=85):
             if ext not in image_extensions:
                 continue
             
-            # Keep JPG extension for output
+            # Always output as JPG (converts HEIC if needed)
             output_filename = Path(filename).stem + '.jpg'
             output_path = os.path.join(output_dir, output_filename)
             
             # Skip if output already exists
             if os.path.exists(output_path):
                 results["processed"] += 1
+                # Delete original HEIC if JPG exists
+                if ext in ('.heic', '.heif') and file_path != output_path:
+                    try:
+                        os.remove(file_path)
+                    except:
+                        pass
                 continue
             
-            # Resize image
+            # Resize image (also converts HEIC to JPG)
             result = resize_image(file_path, output_path, max_width, max_height, quality)
             
             if result["success"]:
                 results["processed"] += 1
                 results["total_savings"] += result["savings"]
+                
+                # Delete original HEIC after successful conversion
+                if ext in ('.heic', '.heif') and file_path != output_path:
+                    try:
+                        os.remove(file_path)
+                    except:
+                        pass
             else:
                 results["failed"] += 1
                 results["errors"].append({

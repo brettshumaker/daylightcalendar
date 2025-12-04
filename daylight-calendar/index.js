@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-36
+// Daylight Calendar v1.1.8.0-alpha-37
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1273,11 +1273,12 @@ app.get('/api/icloud/settings', (req, res) => {
       // Add storage info
       try {
         const currentSize = getDirectorySize(icloudPhotosDir);
-        const photos = fs.readdirSync(icloudPhotosDir).filter(f => 
-          f.toLowerCase().endsWith('.jpg') || 
-          f.toLowerCase().endsWith('.jpeg') || 
-          f.toLowerCase().endsWith('.png')
-        );
+        const photos = fs.readdirSync(icloudPhotosDir).filter(f => {
+          const lower = f.toLowerCase();
+          // Count all image files including HEIC (before conversion)
+          return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || 
+                 lower.endsWith('.png') || lower.endsWith('.heic') || lower.endsWith('.heif');
+        });
         
         settings.currentStorageMB = Math.round(currentSize / 1024 / 1024 * 100) / 100;
         settings.photoCount = photos.length;
@@ -1689,18 +1690,18 @@ app.post('/api/icloud/sync', async (req, res) => {
 app.get('/api/icloud/photos', (req, res) => {
   try {
     const photos = fs.readdirSync(icloudPhotosDir)
-      .filter(f => 
-        f.toLowerCase().endsWith('.jpg') || 
-        f.toLowerCase().endsWith('.jpeg') || 
-        f.toLowerCase().endsWith('.png')
-      )
+      .filter(f => {
+        const lower = f.toLowerCase();
+        return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png');
+        // Don't include HEIC - they should be converted to JPG by resize script
+      })
       .map(filename => ({
         filename,
         url: `/api/icloud/photo/${filename}`,
         path: path.join(icloudPhotosDir, filename)
       }));
     
-    console.log(`[INFO] Found ${photos.length} photos for slideshow`);
+    console.log(`[INFO] Found ${photos.length} photos for slideshow (JPG only)`);
     res.json(photos);
   } catch (error) {
     console.error('[ERROR] Error listing photos:', error);

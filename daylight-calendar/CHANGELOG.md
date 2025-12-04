@@ -1,19 +1,26 @@
 # Changelog
 
+## [1.1.8.0-alpha-37] - 2025-12-04
+
+**Fixed icloudpd Command & HEIC Handling**
+
+- **Fixed hallucination** - Removed non-existent `--convert-to-jpeg` and `--jpeg-quality` flags
+- **Kept flat directory** - `--folder-structure=none` IS a real flag and works great!
+- **Added HEIC conversion back** - Resize script converts HEIC → JPG using pillow-heif
+- Re-added `pillow-heif` dependency for proper HEIC support
+- Updated photo counting to include HEIC files before conversion
+- Slideshow only shows JPG/PNG (after HEIC conversion)
+- Auto-deletes HEIC files after successful JPG conversion
+
 ## [1.1.8.0-alpha-36] - 2025-12-04
 
 **Simplified Photo Storage & Auto-Sync on Album Change**
 
 - **Flat directory structure** - Added `--folder-structure=none` to icloudpd (no more subdirectories!)
-- **JPG conversion at download** - Added `--convert-to-jpeg` flag so icloudpd converts HEIC to JPG
-- **Removed pillow-heif dependency** - No longer needed since icloudpd handles conversion
+- ~~JPG conversion at download~~ - This flag doesn't exist, fixed in alpha-37
 - **Auto-sync on album change** - Automatically clears photos and syncs when selecting a new album
 - **Auto-clear photos** - When switching albums, old photos are cleared automatically
-- Reverted recursive scanning code - back to simple flat directory structure
 - Added user feedback messages when selecting albums
-- Simplified resize script (no HEIC handling needed)
-
-Much simpler and cleaner! No more subdirectories or manual HEIC conversion.
 
 ## [1.1.8.0-alpha-35] - 2025-12-04
 
