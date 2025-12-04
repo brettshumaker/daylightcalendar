@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.8.0-alpha-22] - 2025-12-04
+
+**Build Fix**
+- Fixed Dockerfile to properly install icloudpd by upgrading pip/setuptools/wheel first
+- Resolved TOML parser error during Python dependency installation
+
 ## [1.1.8.0-alpha-21] - 2025-12-04
 
 **🎨 iCloud Photos Screensaver**

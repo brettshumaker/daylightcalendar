@@ -16,11 +16,15 @@ RUN apk add --no-cache \
     openbox \
     chromium \
     py3-pillow \
+    py3-requests \
+    py3-cryptography \
     jpeg-dev \
     zlib-dev
 
-# Install icloudpd for photo syncing
-RUN pip3 install --no-cache-dir icloudpd six pytz tzlocal
+# Upgrade pip and install icloudpd for photo syncing
+# Upgrade pip/setuptools/wheel first to avoid TOML parsing issues
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip3 install --no-cache-dir --upgrade 'icloudpd>=1.17.3' six pytz tzlocal
 
 # Copy S6 overlay and other rootfs items
 COPY rootfs /
