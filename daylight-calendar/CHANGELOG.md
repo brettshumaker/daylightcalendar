@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.8.0-alpha-32] - 2025-12-04
+
+**Debug 2FA Validation**
+
+- Added logging to 2FA validation endpoint
+- Will show what's received in request body
+- Will show if credentials are present in settings
+- This will identify why 400 error is returned
+
 ## [1.1.8.0-alpha-31] - 2025-12-04
 
 **Enhanced Python Logging**

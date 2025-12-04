@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-31
+// Daylight Calendar v1.1.8.0-alpha-32
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1391,8 +1391,25 @@ app.post('/api/icloud/authenticate', async (req, res) => {
     
     console.log('[INFO] iCloud auth result:', JSON.stringify(result));
     
+    // Always save credentials when auth doesn't fail (even if 2FA required)
+    if (result.requires_2fa || result.success) {
+      console.log('[INFO] Saving credentials to settings');
+      const settingsPath = getDataPath('icloud-settings.json');
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      settings.appleId = appleId;
+      settings.password = password; // Store encrypted in production
+      
+      // Only mark as fully enabled if no 2FA required
+      if (result.success && !result.requires_2fa) {
+        settings.enabled = true;
+        settings.sessionExpiry = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+      }
+      
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    }
+    
     if (result.requires_2fa) {
-      console.log('[INFO] 2FA required');
+      console.log('[INFO] 2FA required, credentials saved, prompting for code');
       return res.json({
         success: false,
         requires2fa: true,
@@ -1401,17 +1418,7 @@ app.post('/api/icloud/authenticate', async (req, res) => {
     }
     
     if (result.success) {
-      console.log('[INFO] Authentication successful, saving settings');
-      // Save credentials to settings
-      const settingsPath = getDataPath('icloud-settings.json');
-      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      settings.appleId = appleId;
-      settings.password = password; // Store encrypted in production
-      settings.enabled = true;
-      settings.sessionExpiry = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(); // ~60 days
-      
-      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-      
+      console.log('[INFO] Authentication successful');
       return res.json({
         success: true,
         message: 'Authentication successful'
@@ -1429,9 +1436,14 @@ app.post('/api/icloud/authenticate', async (req, res) => {
 
 // POST validate 2FA code
 app.post('/api/icloud/validate-2fa', async (req, res) => {
+  console.log('[INFO] Received 2FA validation request');
+  console.log('[INFO] Request body:', JSON.stringify(req.body));
+  
   const { code } = req.body;
+  console.log('[INFO] Extracted code:', code ? `${code.length} digits` : 'MISSING');
   
   if (!code) {
+    console.log('[ERROR] No code provided in request');
     return res.status(400).json({ error: '2FA code required' });
   }
   
@@ -1439,7 +1451,11 @@ app.post('/api/icloud/validate-2fa', async (req, res) => {
     const settingsPath = getDataPath('icloud-settings.json');
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     
+    console.log('[INFO] Settings loaded, appleId:', settings.appleId ? 'present' : 'MISSING');
+    console.log('[INFO] Settings loaded, password:', settings.password ? 'present' : 'MISSING');
+    
     if (!settings.appleId || !settings.password) {
+      console.log('[ERROR] Credentials not found in settings');
       return res.status(400).json({ error: 'Apple ID credentials not found' });
     }
     
