@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.8.0-alpha-30] - 2025-12-04
+
+**Added Debug Endpoint**
+
+- Added `/api/debug/env` endpoint to check environment without Python
+- Shows Node version, Python version, installed pip packages, file listings
+- Accessible from browser to debug container environment
+
 ## [1.1.8.0-alpha-29] - 2025-12-04
 
 **CRITICAL FIX: Python Module Installation**

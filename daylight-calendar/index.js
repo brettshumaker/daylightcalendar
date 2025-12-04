@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-29
+// Daylight Calendar v1.1.8.0-alpha-30
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1311,6 +1311,33 @@ app.post('/api/icloud/settings', (req, res) => {
     
     writeDataFile('icloud-settings.json', updatedSettings, res, () => {
       res.json({ success: true, message: 'Settings updated' });
+    });
+  });
+});
+
+// Debug endpoint - check environment without Python
+app.get('/api/debug/env', (req, res) => {
+  const { exec } = require('child_process');
+  
+  exec('which python3 && python3 --version && python3 -m pip list', (error, stdout, stderr) => {
+    res.json({
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      cwd: process.cwd(),
+      env: {
+        PATH: process.env.PATH,
+        PYTHONPATH: process.env.PYTHONPATH
+      },
+      pythonCheck: {
+        stdout: stdout,
+        stderr: stderr,
+        error: error ? error.message : null
+      },
+      files: {
+        app: require('fs').readdirSync('/app').slice(0, 20),
+        data: require('fs').existsSync('/data') ? require('fs').readdirSync('/data').slice(0, 20) : 'not exists'
+      }
     });
   });
 });

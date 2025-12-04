@@ -7,8 +7,31 @@ Handles login, 2FA, and session persistence for icloudpd
 import sys
 import json
 import os
-from pyicloud import PyiCloudService
-from pyicloud.exceptions import PyiCloudFailedLoginException
+
+# Helper function to log to stderr (shows in HA addon logs)
+def log(message):
+    print(f"[Python] {message}", file=sys.stderr, flush=True)
+
+log("icloud_auth.py script starting...")
+
+try:
+    log("Attempting to import pyicloud...")
+    from pyicloud import PyiCloudService
+    from pyicloud.exceptions import PyiCloudFailedLoginException
+    log("pyicloud imported successfully!")
+except ImportError as e:
+    log(f"FAILED to import pyicloud: {e}")
+    log(f"Python path: {sys.path}")
+    log(f"Python executable: {sys.executable}")
+    result = {
+        "success": False,
+        "error": "ImportError",
+        "message": f"Failed to import pyicloud: {str(e)}",
+        "python_path": sys.path,
+        "python_executable": sys.executable
+    }
+    print(json.dumps(result))
+    sys.exit(1)
 
 def authenticate(apple_id, password, cookie_directory):
     """
@@ -16,12 +39,17 @@ def authenticate(apple_id, password, cookie_directory):
     Returns status and session info.
     """
     try:
+        log(f"Authenticating with Apple ID: {apple_id[:3]}...@...")
+        log(f"Cookie directory: {cookie_directory}")
+        
         # Initialize iCloud service
         api = PyiCloudService(
             apple_id,
             password,
             cookie_directory=cookie_directory
         )
+        
+        log("PyiCloudService initialized successfully")
         
         # Check if 2FA is required
         if api.requires_2fa:
@@ -131,8 +159,12 @@ def check_session(apple_id, password, cookie_directory):
 
 if __name__ == "__main__":
     try:
+        log("Reading command from stdin...")
         # Read command from stdin
-        command_data = json.loads(sys.stdin.read())
+        stdin_data = sys.stdin.read()
+        log(f"Received {len(stdin_data)} bytes from stdin")
+        command_data = json.loads(stdin_data)
+        log(f"Parsed command: {command_data.get('command')}")
         
         command = command_data.get("command")
         apple_id = command_data.get("apple_id")
