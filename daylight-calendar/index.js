@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.7.2-alpha-20
+// Daylight Calendar v1.1.8.0-alpha-21
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -9,6 +9,8 @@ const { Server } = require('socket.io');
 const axios = require('axios');
 const fs = require('fs');
 const { exec } = require('child_process');
+const { PythonShell } = require('python-shell');
+const sharp = require('sharp');
 
 // Configuration
 let config;
@@ -134,6 +136,31 @@ initializeDataFile('display-settings.json', {
   dimAfterMinutes: 10,
   displayClock: false
 });
+
+// Initialize iCloud settings
+initializeDataFile('icloud-settings.json', {
+  enabled: false,
+  appleId: '',
+  albumName: 'Calendar Screensaver',
+  storageLimitMB: 500,
+  maxWidth: 1920,
+  maxHeight: 1080,
+  syncFrequencyHours: 6,
+  lastSync: null,
+  sessionExpiry: null
+});
+
+// iCloud photos directory setup
+const icloudPhotosDir = path.join(dataDir, 'screensaver_photos');
+const icloudCookieDir = path.join(dataDir, 'icloud_session');
+
+// Ensure iCloud directories exist
+if (!fs.existsSync(icloudPhotosDir)) {
+  fs.mkdirSync(icloudPhotosDir, { recursive: true });
+}
+if (!fs.existsSync(icloudCookieDir)) {
+  fs.mkdirSync(icloudCookieDir, { recursive: true });
+}
 
 // Routes
 app.get('/', (req, res) => {
@@ -1130,11 +1157,483 @@ app.get('/api/weather/forecast', async (req, res) => {
   }
 });
 
+// ============================================================================
+// iCloud Photos API Endpoints
+// ============================================================================
+
+// Helper function to run Python scripts
+const runPythonScript = (scriptName, data) => {
+  return new Promise((resolve, reject) => {
+    const options = {
+      mode: 'json',
+      pythonPath: 'python3',
+      pythonOptions: ['-u'],
+      scriptPath: __dirname,
+      args: []
+    };
+
+    const pyshell = new PythonShell(scriptName, options);
+
+    // Send data to Python script
+    pyshell.send(data);
+
+    let result = null;
+
+    pyshell.on('message', (message) => {
+      result = message;
+    });
+
+    pyshell.end((err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+// Helper function to calculate directory size
+const getDirectorySize = (dirPath) => {
+  let totalSize = 0;
+  const files = fs.readdirSync(dirPath);
+  
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const stats = fs.statSync(filePath);
+    
+    if (stats.isFile()) {
+      totalSize += stats.size;
+    }
+  }
+  
+  return totalSize;
+};
+
+// Helper function to enforce storage limits
+const enforceStorageLimit = (dirPath, limitMB) => {
+  const limitBytes = limitMB * 1024 * 1024;
+  let currentSize = getDirectorySize(dirPath);
+  
+  if (currentSize <= limitBytes) {
+    return { removed: 0, currentSize };
+  }
+  
+  // Get all files with their timestamps
+  const files = fs.readdirSync(dirPath)
+    .map(file => {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      return {
+        path: filePath,
+        mtime: stats.mtime,
+        size: stats.size
+      };
+    })
+    .sort((a, b) => a.mtime - b.mtime); // Sort by oldest first
+  
+  let removedCount = 0;
+  
+  // Remove oldest files until under limit
+  for (const file of files) {
+    if (currentSize <= limitBytes) {
+      break;
+    }
+    
+    fs.unlinkSync(file.path);
+    currentSize -= file.size;
+    removedCount++;
+  }
+  
+  return { removed: removedCount, currentSize };
+};
+
+// GET iCloud settings
+app.get('/api/icloud/settings', (req, res) => {
+  const filePath = getDataPath('icloud-settings.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('[ERROR] Error reading icloud-settings.json:', err);
+      return res.status(500).json({ error: 'Failed to read iCloud settings' });
+    }
+    
+    try {
+      const settings = JSON.parse(data);
+      // Don't send password to client
+      delete settings.password;
+      
+      // Add storage info
+      try {
+        const currentSize = getDirectorySize(icloudPhotosDir);
+        const photos = fs.readdirSync(icloudPhotosDir).filter(f => 
+          f.toLowerCase().endsWith('.jpg') || 
+          f.toLowerCase().endsWith('.jpeg') || 
+          f.toLowerCase().endsWith('.png')
+        );
+        
+        settings.currentStorageMB = Math.round(currentSize / 1024 / 1024 * 100) / 100;
+        settings.photoCount = photos.length;
+      } catch (e) {
+        settings.currentStorageMB = 0;
+        settings.photoCount = 0;
+      }
+      
+      res.json(settings);
+    } catch (parseErr) {
+      console.error('[ERROR] Error parsing icloud-settings.json:', parseErr);
+      res.status(500).json({ error: 'Invalid settings format' });
+    }
+  });
+});
+
+// POST update iCloud settings
+app.post('/api/icloud/settings', (req, res) => {
+  const filePath = getDataPath('icloud-settings.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    const settings = err ? {} : JSON.parse(data);
+    
+    // Update settings
+    const updatedSettings = {
+      ...settings,
+      ...req.body,
+      // Don't allow updating lastSync or sessionExpiry via this endpoint
+      lastSync: settings.lastSync,
+      sessionExpiry: settings.sessionExpiry
+    };
+    
+    writeDataFile('icloud-settings.json', updatedSettings, res, () => {
+      res.json({ success: true, message: 'Settings updated' });
+    });
+  });
+});
+
+// POST authenticate with iCloud
+app.post('/api/icloud/authenticate', async (req, res) => {
+  const { appleId, password } = req.body;
+  
+  if (!appleId || !password) {
+    return res.status(400).json({ error: 'Apple ID and password required' });
+  }
+  
+  try {
+    const result = await runPythonScript('icloud_auth.py', {
+      command: 'authenticate',
+      apple_id: appleId,
+      password: password,
+      cookie_directory: icloudCookieDir
+    });
+    
+    if (result.requires_2fa) {
+      return res.json({
+        success: false,
+        requires2fa: true,
+        message: 'Two-factor authentication required'
+      });
+    }
+    
+    if (result.success) {
+      // Save credentials to settings
+      const settingsPath = getDataPath('icloud-settings.json');
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      settings.appleId = appleId;
+      settings.password = password; // Store encrypted in production
+      settings.enabled = true;
+      settings.sessionExpiry = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(); // ~60 days
+      
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      
+      return res.json({
+        success: true,
+        message: 'Authentication successful'
+      });
+    }
+    
+    res.status(401).json(result);
+  } catch (error) {
+    console.error('[ERROR] iCloud authentication error:', error);
+    res.status(500).json({ error: 'Authentication failed', details: error.message });
+  }
+});
+
+// POST validate 2FA code
+app.post('/api/icloud/validate-2fa', async (req, res) => {
+  const { code } = req.body;
+  
+  if (!code) {
+    return res.status(400).json({ error: '2FA code required' });
+  }
+  
+  try {
+    const settingsPath = getDataPath('icloud-settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    
+    if (!settings.appleId || !settings.password) {
+      return res.status(400).json({ error: 'Apple ID credentials not found' });
+    }
+    
+    const result = await runPythonScript('icloud_auth.py', {
+      command: 'validate_2fa',
+      apple_id: settings.appleId,
+      password: settings.password,
+      cookie_directory: icloudCookieDir,
+      code: code
+    });
+    
+    if (result.success) {
+      settings.enabled = true;
+      settings.sessionExpiry = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('[ERROR] 2FA validation error:', error);
+    res.status(500).json({ error: 'Validation failed', details: error.message });
+  }
+});
+
+// GET check authentication status
+app.get('/api/icloud/status', async (req, res) => {
+  try {
+    const settingsPath = getDataPath('icloud-settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    
+    if (!settings.enabled || !settings.appleId) {
+      return res.json({
+        authenticated: false,
+        message: 'Not configured'
+      });
+    }
+    
+    // Check if session is expired
+    if (settings.sessionExpiry) {
+      const expiryDate = new Date(settings.sessionExpiry);
+      const now = new Date();
+      const daysUntilExpiry = Math.floor((expiryDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilExpiry <= 0) {
+        return res.json({
+          authenticated: false,
+          expired: true,
+          message: 'Session expired'
+        });
+      }
+      
+      return res.json({
+        authenticated: true,
+        expiryDate: settings.sessionExpiry,
+        daysUntilExpiry,
+        warningNeeded: daysUntilExpiry <= 7
+      });
+    }
+    
+    res.json({
+      authenticated: true,
+      message: 'Authenticated'
+    });
+  } catch (error) {
+    console.error('[ERROR] Status check error:', error);
+    res.status(500).json({ error: 'Failed to check status' });
+  }
+});
+
+// POST trigger photo sync
+app.post('/api/icloud/sync', async (req, res) => {
+  try {
+    const settingsPath = getDataPath('icloud-settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    
+    if (!settings.enabled || !settings.appleId || !settings.password) {
+      return res.status(400).json({ error: 'iCloud not configured' });
+    }
+    
+    // Run sync
+    const syncResult = await runPythonScript('icloud_sync.py', {
+      command: 'sync',
+      apple_id: settings.appleId,
+      password: settings.password,
+      cookie_directory: icloudCookieDir,
+      output_directory: icloudPhotosDir,
+      album_name: settings.albumName || null
+    });
+    
+    if (!syncResult.success) {
+      return res.status(500).json(syncResult);
+    }
+    
+    // Resize images if needed
+    if (settings.maxWidth && settings.maxHeight) {
+      const resizeResult = await runPythonScript('resize_images.py', {
+        command: 'resize_directory',
+        input_dir: icloudPhotosDir,
+        output_dir: icloudPhotosDir,
+        max_width: settings.maxWidth,
+        max_height: settings.maxHeight,
+        quality: 85
+      });
+      
+      console.log('[INFO] Image resize result:', resizeResult);
+    }
+    
+    // Enforce storage limit
+    const cleanup = enforceStorageLimit(icloudPhotosDir, settings.storageLimitMB);
+    
+    // Update last sync time
+    settings.lastSync = new Date().toISOString();
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    
+    res.json({
+      success: true,
+      message: 'Sync completed',
+      photoCount: syncResult.photo_count,
+      photosRemoved: cleanup.removed,
+      currentStorageMB: Math.round(cleanup.currentSize / 1024 / 1024 * 100) / 100
+    });
+  } catch (error) {
+    console.error('[ERROR] Sync error:', error);
+    res.status(500).json({ error: 'Sync failed', details: error.message });
+  }
+});
+
+// GET list photos for slideshow
+app.get('/api/icloud/photos', (req, res) => {
+  try {
+    const photos = fs.readdirSync(icloudPhotosDir)
+      .filter(f => 
+        f.toLowerCase().endsWith('.jpg') || 
+        f.toLowerCase().endsWith('.jpeg') || 
+        f.toLowerCase().endsWith('.png')
+      )
+      .map(filename => ({
+        filename,
+        url: `/api/icloud/photo/${filename}`,
+        path: path.join(icloudPhotosDir, filename)
+      }));
+    
+    res.json(photos);
+  } catch (error) {
+    console.error('[ERROR] Error listing photos:', error);
+    res.json([]);
+  }
+});
+
+// GET individual photo
+app.get('/api/icloud/photo/:filename', (req, res) => {
+  const photoPath = path.join(icloudPhotosDir, req.params.filename);
+  
+  if (!fs.existsSync(photoPath)) {
+    return res.status(404).json({ error: 'Photo not found' });
+  }
+  
+  res.sendFile(photoPath);
+});
+
+// DELETE clear photo cache
+app.delete('/api/icloud/cache', (req, res) => {
+  try {
+    const files = fs.readdirSync(icloudPhotosDir);
+    let deletedCount = 0;
+    
+    for (const file of files) {
+      const filePath = path.join(icloudPhotosDir, file);
+      if (fs.statSync(filePath).isFile()) {
+        fs.unlinkSync(filePath);
+        deletedCount++;
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Cleared ${deletedCount} photos`,
+      deletedCount
+    });
+  } catch (error) {
+    console.error('[ERROR] Error clearing cache:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+// Background sync scheduler
+let syncInterval = null;
+
+const startSyncScheduler = () => {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+  }
+  
+  const settingsPath = getDataPath('icloud-settings.json');
+  
+  const runScheduledSync = async () => {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      
+      if (!settings.enabled || !settings.appleId) {
+        return;
+      }
+      
+      console.log('[INFO] Running scheduled iCloud photo sync...');
+      
+      const syncResult = await runPythonScript('icloud_sync.py', {
+        command: 'sync',
+        apple_id: settings.appleId,
+        password: settings.password,
+        cookie_directory: icloudCookieDir,
+        output_directory: icloudPhotosDir,
+        album_name: settings.albumName || null
+      });
+      
+      if (syncResult.success) {
+        // Resize images
+        if (settings.maxWidth && settings.maxHeight) {
+          await runPythonScript('resize_images.py', {
+            command: 'resize_directory',
+            input_dir: icloudPhotosDir,
+            output_dir: icloudPhotosDir,
+            max_width: settings.maxWidth,
+            max_height: settings.maxHeight,
+            quality: 85
+          });
+        }
+        
+        // Enforce storage limit
+        enforceStorageLimit(icloudPhotosDir, settings.storageLimitMB);
+        
+        // Update last sync
+        settings.lastSync = new Date().toISOString();
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+        
+        console.log('[INFO] Scheduled sync completed successfully');
+      } else {
+        console.error('[ERROR] Scheduled sync failed:', syncResult);
+      }
+    } catch (error) {
+      console.error('[ERROR] Scheduled sync error:', error);
+    }
+  };
+  
+  // Run sync every X hours (read from settings)
+  const checkInterval = () => {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const hours = settings.syncFrequencyHours || 6;
+      return hours * 60 * 60 * 1000;
+    } catch {
+      return 6 * 60 * 60 * 1000; // Default 6 hours
+    }
+  };
+  
+  syncInterval = setInterval(runScheduledSync, checkInterval());
+  console.log('[INFO] iCloud photo sync scheduler started');
+};
+
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${isProduction ? 'Production' : 'Development'}`);
   console.log(`Data directory: ${dataDir}`);
+  
+  // Start iCloud photo sync scheduler
+  startSyncScheduler();
   
   // In production mode with kiosk_mode enabled, start the web browser
   if (isProduction && config.kiosk_mode) {

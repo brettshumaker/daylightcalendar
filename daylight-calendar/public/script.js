@@ -3738,4 +3738,485 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize screen activity timer
   resetActivityTimer();
+  
+  // Initialize iCloud settings
+  initializeiCloudSettings();
+  
+  // Initialize screensaver
+  initializeScreensaver();
 });
+
+// ============================================================================
+// iCloud Photos Settings
+// ============================================================================
+
+let iCloudSettings = {};
+let iCloudPhotos = [];
+let currentPhotoIndex = 0;
+let screensaverInterval = null;
+
+async function initializeiCloudSettings() {
+  // Load settings from API
+  await loadiCloudSettings();
+  
+  // Set up event listeners
+  document.getElementById('icloud-login-btn').addEventListener('click', handleiCloudLogin);
+  document.getElementById('icloud-save-settings-btn').addEventListener('click', saveiCloudSettings);
+  document.getElementById('icloud-sync-now-btn').addEventListener('click', synciCloudPhotos);
+  document.getElementById('icloud-clear-cache-btn').addEventListener('click', cleariCloudCache);
+  document.getElementById('icloud-verify-2fa-btn').addEventListener('click', verifyiCloud2FA);
+  
+  // Modal close buttons
+  document.querySelectorAll('#icloud-2fa-modal .modal-close').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('icloud-2fa-modal').style.display = 'none';
+    });
+  });
+  
+  // Check status periodically
+  setInterval(checkiCloudStatus, 60000); // Check every minute
+}
+
+async function loadiCloudSettings() {
+  try {
+    const response = await fetch('/api/icloud/settings');
+    const settings = await response.json();
+    
+    iCloudSettings = settings;
+    
+    // Update UI
+    document.getElementById('icloud-apple-id').value = settings.appleId || '';
+    document.getElementById('icloud-album-name').value = settings.albumName || 'Calendar Screensaver';
+    document.getElementById('icloud-storage-limit').value = settings.storageLimitMB || 500;
+    document.getElementById('icloud-sync-frequency').value = settings.syncFrequencyHours || 6;
+    
+    // Set resolution dropdown
+    const resolution = `${settings.maxWidth}x${settings.maxHeight}`;
+    const resolutionSelect = document.getElementById('icloud-resolution');
+    if (resolution === '0x0' || !settings.maxWidth) {
+      resolutionSelect.value = 'original';
+    } else {
+      resolutionSelect.value = resolution;
+    }
+    
+    // Update storage info
+    updateStorageDisplay(settings);
+    
+    // Check authentication status
+    await checkiCloudStatus();
+    
+  } catch (error) {
+    console.error('Error loading iCloud settings:', error);
+  }
+}
+
+function updateStorageDisplay(settings) {
+  const usedMB = settings.currentStorageMB || 0;
+  const limitMB = settings.storageLimitMB || 500;
+  const photoCount = settings.photoCount || 0;
+  const percentage = (usedMB / limitMB) * 100;
+  
+  document.getElementById('icloud-storage-used').textContent = usedMB.toFixed(2);
+  document.getElementById('icloud-storage-limit').textContent = limitMB;
+  document.getElementById('icloud-photo-count').textContent = photoCount;
+  
+  const fillBar = document.getElementById('icloud-storage-bar-fill');
+  fillBar.style.width = `${Math.min(percentage, 100)}%`;
+  
+  if (percentage > 90) {
+    fillBar.classList.add('warning');
+  } else {
+    fillBar.classList.remove('warning');
+  }
+  
+  // Update last sync
+  if (settings.lastSync) {
+    const lastSync = new Date(settings.lastSync);
+    const now = new Date();
+    const diffMs = now - lastSync;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    let syncText = 'Last synced: ';
+    if (diffMins < 1) {
+      syncText += 'Just now';
+    } else if (diffMins < 60) {
+      syncText += `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      syncText += `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else {
+      syncText += `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    }
+    
+    document.getElementById('icloud-last-sync').textContent = syncText;
+  } else {
+    document.getElementById('icloud-last-sync').textContent = 'Last synced: Never';
+  }
+}
+
+async function checkiCloudStatus() {
+  try {
+    const response = await fetch('/api/icloud/status');
+    const status = await response.json();
+    
+    const indicator = document.getElementById('icloud-status-indicator');
+    const statusText = document.getElementById('icloud-status-text');
+    const sessionInfo = document.getElementById('icloud-session-info');
+    const expiryText = document.getElementById('icloud-expiry-text');
+    
+    if (status.authenticated) {
+      indicator.classList.remove('disconnected');
+      indicator.classList.add('connected');
+      
+      if (status.warningNeeded) {
+        indicator.classList.add('warning');
+        statusText.textContent = 'Connected (Session Expiring Soon)';
+        expiryText.textContent = `Session expires in ${status.daysUntilExpiry} days. Please re-authenticate soon.`;
+        sessionInfo.style.display = 'block';
+      } else {
+        indicator.classList.remove('warning');
+        statusText.textContent = 'Connected';
+        sessionInfo.style.display = 'none';
+      }
+      
+      // Enable sync buttons
+      document.getElementById('icloud-sync-now-btn').disabled = false;
+      document.getElementById('icloud-clear-cache-btn').disabled = false;
+      
+    } else {
+      indicator.classList.remove('connected', 'warning');
+      indicator.classList.add('disconnected');
+      statusText.textContent = status.expired ? 'Session Expired - Login Required' : 'Not Connected';
+      sessionInfo.style.display = 'none';
+      
+      // Disable sync buttons
+      document.getElementById('icloud-sync-now-btn').disabled = true;
+      document.getElementById('icloud-clear-cache-btn').disabled = true;
+    }
+    
+  } catch (error) {
+    console.error('Error checking iCloud status:', error);
+  }
+}
+
+async function handleiCloudLogin() {
+  const appleId = document.getElementById('icloud-apple-id').value.trim();
+  const password = document.getElementById('icloud-password').value;
+  
+  if (!appleId || !password) {
+    alert('Please enter your Apple ID and password');
+    return;
+  }
+  
+  const btn = document.getElementById('icloud-login-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/authenticate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appleId, password })
+    });
+    
+    const result = await response.json();
+    
+    if (result.requires2fa) {
+      // Show 2FA modal
+      document.getElementById('icloud-2fa-modal').style.display = 'flex';
+      document.getElementById('icloud-2fa-code').value = '';
+      document.getElementById('icloud-2fa-code').focus();
+    } else if (result.success) {
+      alert('Successfully logged in to iCloud!');
+      await loadiCloudSettings();
+      // Clear password field
+      document.getElementById('icloud-password').value = '';
+    } else {
+      alert(`Login failed: ${result.message || result.error}`);
+    }
+    
+  } catch (error) {
+    console.error('Error logging in to iCloud:', error);
+    alert('Failed to login. Please try again.');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function verifyiCloud2FA() {
+  const code = document.getElementById('icloud-2fa-code').value.trim();
+  
+  if (!code || code.length !== 6) {
+    document.getElementById('icloud-2fa-error').textContent = 'Please enter a valid 6-digit code';
+    document.getElementById('icloud-2fa-error').style.display = 'block';
+    return;
+  }
+  
+  const btn = document.getElementById('icloud-verify-2fa-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/validate-2fa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      document.getElementById('icloud-2fa-modal').style.display = 'none';
+      alert('Successfully authenticated with iCloud!');
+      await loadiCloudSettings();
+      // Clear password field
+      document.getElementById('icloud-password').value = '';
+    } else {
+      document.getElementById('icloud-2fa-error').textContent = result.message || 'Verification failed';
+      document.getElementById('icloud-2fa-error').style.display = 'block';
+    }
+    
+  } catch (error) {
+    console.error('Error verifying 2FA:', error);
+    document.getElementById('icloud-2fa-error').textContent = 'Verification failed. Please try again.';
+    document.getElementById('icloud-2fa-error').style.display = 'block';
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function saveiCloudSettings() {
+  const albumName = document.getElementById('icloud-album-name').value.trim();
+  const storageLimitMB = parseInt(document.getElementById('icloud-storage-limit').value);
+  const syncFrequencyHours = parseInt(document.getElementById('icloud-sync-frequency').value);
+  const resolutionValue = document.getElementById('icloud-resolution').value;
+  
+  let maxWidth, maxHeight;
+  if (resolutionValue === 'original') {
+    maxWidth = 0;
+    maxHeight = 0;
+  } else {
+    [maxWidth, maxHeight] = resolutionValue.split('x').map(Number);
+  }
+  
+  const btn = document.getElementById('icloud-save-settings-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        albumName,
+        storageLimitMB,
+        syncFrequencyHours,
+        maxWidth,
+        maxHeight
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Settings saved successfully!');
+      await loadiCloudSettings();
+    } else {
+      alert('Failed to save settings');
+    }
+    
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    alert('Failed to save settings');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function synciCloudPhotos() {
+  const btn = document.getElementById('icloud-sync-now-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/sync', {
+      method: 'POST'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`Sync completed! Downloaded ${result.photoCount} photos.`);
+      await loadiCloudSettings();
+      // Reload photos for screensaver
+      await loadScreensaverPhotos();
+    } else {
+      alert(`Sync failed: ${result.message || result.error}`);
+    }
+    
+  } catch (error) {
+    console.error('Error syncing photos:', error);
+    alert('Failed to sync photos');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function cleariCloudCache() {
+  if (!confirm('Are you sure you want to clear all cached photos?')) {
+    return;
+  }
+  
+  const btn = document.getElementById('icloud-clear-cache-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/icloud/cache', {
+      method: 'DELETE'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`Cleared ${result.deletedCount} photos`);
+      await loadiCloudSettings();
+      iCloudPhotos = [];
+    } else {
+      alert('Failed to clear cache');
+    }
+    
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    alert('Failed to clear cache');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ============================================================================
+// Screensaver Functions
+// ============================================================================
+
+async function initializeScreensaver() {
+  // Load photos
+  await loadScreensaverPhotos();
+  
+  // Set up click handler to exit screensaver
+  document.getElementById('screensaver-overlay').addEventListener('click', exitScreensaver);
+}
+
+async function loadScreensaverPhotos() {
+  try {
+    const response = await fetch('/api/icloud/photos');
+    iCloudPhotos = await response.json();
+    
+    // Shuffle photos
+    shuffleArray(iCloudPhotos);
+    
+    console.log(`Loaded ${iCloudPhotos.length} photos for screensaver`);
+  } catch (error) {
+    console.error('Error loading screensaver photos:', error);
+    iCloudPhotos = [];
+  }
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function startScreensaver() {
+  if (iCloudPhotos.length === 0) {
+    // No photos, just show clock
+    const overlay = document.getElementById('screensaver-overlay');
+    overlay.classList.add('active');
+    updateScreensaverClock();
+    screensaverInterval = setInterval(updateScreensaverClock, 1000);
+    return;
+  }
+  
+  const overlay = document.getElementById('screensaver-overlay');
+  overlay.classList.add('active');
+  
+  currentPhotoIndex = 0;
+  showNextPhoto();
+  
+  // Change photo every 10 seconds
+  screensaverInterval = setInterval(() => {
+    showNextPhoto();
+  }, 10000);
+  
+  // Update clock every second
+  setInterval(updateScreensaverClock, 1000);
+  updateScreensaverClock();
+}
+
+function showNextPhoto() {
+  if (iCloudPhotos.length === 0) return;
+  
+  const img = document.getElementById('screensaver-photo');
+  
+  // Fade out current photo
+  img.classList.remove('visible');
+  
+  setTimeout(() => {
+    // Change photo
+    img.src = iCloudPhotos[currentPhotoIndex].url;
+    
+    // Fade in new photo
+    img.classList.add('visible');
+    
+    // Move to next photo
+    currentPhotoIndex = (currentPhotoIndex + 1) % iCloudPhotos.length;
+  }, 2000);
+}
+
+function updateScreensaverClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  });
+  const dateStr = now.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  document.getElementById('screensaver-time').textContent = timeStr;
+  document.getElementById('screensaver-date').textContent = dateStr;
+}
+
+function exitScreensaver() {
+  const overlay = document.getElementById('screensaver-overlay');
+  overlay.classList.remove('active');
+  
+  if (screensaverInterval) {
+    clearInterval(screensaverInterval);
+    screensaverInterval = null;
+  }
+  
+  // Wake the screen
+  wakeScreen();
+}
+
+// Modify the existing dim screen function to start screensaver
+const originalDimScreen = dimScreen;
+dimScreen = function() {
+  originalDimScreen();
+  
+  // Start screensaver when screen dims
+  setTimeout(() => {
+    startScreensaver();
+  }, 500);
+};

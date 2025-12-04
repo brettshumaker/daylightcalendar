@@ -754,6 +754,104 @@
             </div>
           </div>
 
+          <div class="settings-section">
+            <h2>iCloud Photos Screensaver</h2>
+            <div class="settings-card">
+              <div class="icloud-status">
+                <div class="status-indicator" id="icloud-status-indicator">
+                  <i class="fas fa-circle"></i>
+                  <span id="icloud-status-text">Not Connected</span>
+                </div>
+                <div id="icloud-session-info" style="display: none;">
+                  <p class="setting-description" id="icloud-expiry-text"></p>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="icloud-apple-id">Apple ID</label>
+                  <input type="email" id="icloud-apple-id" placeholder="your.email@icloud.com">
+                </div>
+                <div class="form-group">
+                  <label for="icloud-password">Password</label>
+                  <input type="password" id="icloud-password" placeholder="Apple ID Password">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <button id="icloud-login-btn" class="btn btn-primary">
+                  <i class="fas fa-sign-in-alt"></i> Login to iCloud
+                </button>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="icloud-album-name">Shared Album Name</label>
+                  <input type="text" id="icloud-album-name" placeholder="Calendar Screensaver"
+                    value="Calendar Screensaver">
+                  <p class="setting-description">Name of the shared iCloud Photos album to sync from.</p>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="icloud-storage-limit">Storage Limit (MB)</label>
+                  <input type="number" id="icloud-storage-limit" min="100" max="5000" step="100" value="500">
+                  <p class="setting-description">Maximum storage space for photos.</p>
+                </div>
+                <div class="form-group">
+                  <label for="icloud-sync-frequency">Sync Frequency</label>
+                  <select id="icloud-sync-frequency">
+                    <option value="1">Every hour</option>
+                    <option value="3">Every 3 hours</option>
+                    <option value="6" selected>Every 6 hours</option>
+                    <option value="12">Every 12 hours</option>
+                    <option value="24">Once per day</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="icloud-resolution">Image Resolution</label>
+                  <select id="icloud-resolution">
+                    <option value="3840x2160">4K (3840x2160)</option>
+                    <option value="1920x1080" selected>1080p (1920x1080)</option>
+                    <option value="1280x720">720p (1280x720)</option>
+                    <option value="original">Original (No Resize)</option>
+                  </select>
+                  <p class="setting-description">Lower resolutions save storage space.</p>
+                </div>
+              </div>
+
+              <div class="icloud-storage-info" id="icloud-storage-info">
+                <h4>Storage Usage</h4>
+                <div class="storage-bar-container">
+                  <div class="storage-bar" id="icloud-storage-bar">
+                    <div class="storage-bar-fill" id="icloud-storage-bar-fill"></div>
+                  </div>
+                  <div class="storage-text">
+                    <span id="icloud-storage-used">0</span> MB / <span id="icloud-storage-limit">500</span> MB
+                    (<span id="icloud-photo-count">0</span> photos)
+                  </div>
+                </div>
+                <p class="setting-description" id="icloud-last-sync">Last synced: Never</p>
+              </div>
+
+              <div class="form-row">
+                <button id="icloud-sync-now-btn" class="btn btn-secondary" disabled>
+                  <i class="fas fa-sync"></i> Sync Now
+                </button>
+                <button id="icloud-clear-cache-btn" class="btn btn-danger" disabled>
+                  <i class="fas fa-trash"></i> Clear Cache
+                </button>
+                <button id="icloud-save-settings-btn" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Save Settings
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -857,6 +955,41 @@
                 <button type="submit" class="btn btn-primary">Save Profile</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- iCloud 2FA Modal -->
+      <div id="icloud-2fa-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Two-Factor Authentication</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>A verification code has been sent to your trusted device.</p>
+            <div class="form-group">
+              <label for="icloud-2fa-code">Verification Code</label>
+              <input type="text" id="icloud-2fa-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+            </div>
+            <div class="form-actions">
+              <button id="icloud-verify-2fa-btn" class="btn btn-primary">
+                <i class="fas fa-check"></i> Verify
+              </button>
+              <button class="btn btn-secondary modal-close">Cancel</button>
+            </div>
+            <div id="icloud-2fa-error" class="error-message" style="display: none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screensaver Overlay -->
+      <div id="screensaver-overlay" class="screensaver-overlay">
+        <div class="screensaver-content">
+          <img id="screensaver-photo" src="" alt="Photo">
+          <div class="screensaver-clock">
+            <div class="screensaver-time" id="screensaver-time"></div>
+            <div class="screensaver-date" id="screensaver-date"></div>
           </div>
         </div>
       </div>
