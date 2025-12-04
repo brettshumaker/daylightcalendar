@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-27
+// Daylight Calendar v1.1.8.0-alpha-28
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1177,13 +1177,22 @@ const runPythonScript = (scriptName, data) => {
     pyshell.send(data);
 
     let result = null;
+    let stderrOutput = '';
 
     pyshell.on('message', (message) => {
       result = message;
     });
 
+    // Capture stderr
+    pyshell.on('stderr', (stderr) => {
+      stderrOutput += stderr + '\n';
+      console.error('[Python stderr]:', stderr);
+    });
+
     pyshell.end((err) => {
       if (err) {
+        console.error('[ERROR] Python script error. stderr:', stderrOutput);
+        err.stderr = stderrOutput;
         reject(err);
       } else {
         resolve(result);
@@ -1304,6 +1313,36 @@ app.post('/api/icloud/settings', (req, res) => {
       res.json({ success: true, message: 'Settings updated' });
     });
   });
+});
+
+// Test endpoint to verify Python environment
+app.get('/api/icloud/test', async (req, res) => {
+  try {
+    console.log('[INFO] Testing Python environment...');
+    const { PythonShell } = require('python-shell');
+    
+    // Test basic Python execution
+    PythonShell.runString('import sys; print(sys.version)', null, (err, results) => {
+      if (err) {
+        console.error('[ERROR] Python test failed:', err);
+        return res.json({ success: false, error: err.message });
+      }
+      console.log('[INFO] Python version:', results);
+      
+      // Test pyicloud import
+      PythonShell.runString('import pyicloud; print("pyicloud imported")', null, (err2, results2) => {
+        if (err2) {
+          console.error('[ERROR] pyicloud import failed:', err2);
+          return res.json({ success: false, pythonVersion: results, pyicloudError: err2.message });
+        }
+        console.log('[INFO] pyicloud test:', results2);
+        res.json({ success: true, pythonVersion: results, pyicloudTest: results2 });
+      });
+    });
+  } catch (error) {
+    console.error('[ERROR] Test error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // POST authenticate with iCloud

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.8.0-alpha-28] - 2025-12-04
+
+**Enhanced Debugging**
+
+- Added stderr capture for Python script execution
+- Added test endpoint `/api/icloud/test` to verify Python environment
+- Enhanced error logging to capture Python stderr output
+- Will now show actual Python errors in logs
+
 ## [1.1.8.0-alpha-27] - 2025-12-04
 
 **Debugging & Error Handling**
