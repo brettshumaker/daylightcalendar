@@ -139,11 +139,10 @@ This feature adds iCloud Photos integration to Daylight Calendar, allowing you t
 **Python:**
 - `icloudpd` - iCloud photo downloader
 - `pyicloud` - iCloud API wrapper
-- `Pillow (py3-pillow)` - Image processing
+- `Pillow (py3-pillow)` - Image processing and resizing
 
 **Node.js:**
 - `python-shell` - Execute Python scripts from Node.js
-- `sharp` - High-performance image processing
 
 ## Security Considerations
 

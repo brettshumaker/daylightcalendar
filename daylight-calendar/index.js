@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-23
+// Daylight Calendar v1.1.8.0-alpha-24
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -10,7 +10,6 @@ const axios = require('axios');
 const fs = require('fs');
 const { exec } = require('child_process');
 const { PythonShell } = require('python-shell');
-const sharp = require('sharp');
 
 // Configuration
 let config;

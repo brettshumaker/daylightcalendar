@@ -1,6 +1,6 @@
 {
 	"name": "daylight-calendar",
-	"version": "1.1.8.0-alpha-23",
+	"version": "1.1.8.0-alpha-24",
 	"description": "A beautiful fullscreen calendar display for your Home Assistant touchscreen",
 	"main": "index.js",
 	"scripts": {
@@ -27,8 +27,7 @@
 		"socket.io": "^4.7.2",
 		"webpack": "^5.0.0",
 		"webpack-cli": "^4.0.0",
-		"python-shell": "^5.0.0",
-		"sharp": "^0.33.0"
+		"python-shell": "^5.0.0"
 	},
 	"devDependencies": {
 		"nodemon": "^3.0.1"

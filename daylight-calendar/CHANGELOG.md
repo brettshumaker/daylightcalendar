@@ -1,11 +1,20 @@
 # Changelog
 
+## [1.1.8.0-alpha-24] - 2025-12-04
+
+**Runtime Fix**
+
+- Removed `sharp` dependency (not needed - using Pillow in Python for image resizing)
+- Fixed runtime error on Node.js 16 (sharp requires Node 18+)
+- All image resizing handled by Python/Pillow instead of Node.js/sharp
+
 ## [1.1.8.0-alpha-23] - 2025-12-04
 
-**Build Fix**
+**Build & Runtime Fix**
 
+- Removed `sharp` dependency (not needed - using Pillow in Python for image resizing)
+- Fixed runtime error on Node.js 16 (sharp requires Node 18+)
 - Added BUILD_VERSION ARG to Dockerfile to fix undefined variable warning
-- Fixed Dockerfile to avoid distutils packaging conflict
 - Fixed Dockerfile to avoid distutils packaging conflict
 - Simplified pip upgrade to use --ignore-installed flag
 - Install icloudpd without upgrading setuptools/wheel to avoid Alpine Linux package conflicts
@@ -76,7 +85,7 @@ Major new feature: Display photos from your iCloud shared albums as a beautiful 
 ### Dependencies Added
 
 - Python: `icloudpd`, `pyicloud`, `Pillow`, `py3-pillow`, `jpeg-dev`, `zlib-dev`
-- Node.js: `python-shell`, `sharp`
+- Node.js: `python-shell`
 
 ### Files Added
 
