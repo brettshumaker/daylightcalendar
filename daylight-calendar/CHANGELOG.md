@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.1.8.0-alpha-36] - 2025-12-04
+
+**Simplified Photo Storage & Auto-Sync on Album Change**
+
+- **Flat directory structure** - Added `--folder-structure=none` to icloudpd (no more subdirectories!)
+- **JPG conversion at download** - Added `--convert-to-jpeg` flag so icloudpd converts HEIC to JPG
+- **Removed pillow-heif dependency** - No longer needed since icloudpd handles conversion
+- **Auto-sync on album change** - Automatically clears photos and syncs when selecting a new album
+- **Auto-clear photos** - When switching albums, old photos are cleared automatically
+- Reverted recursive scanning code - back to simple flat directory structure
+- Added user feedback messages when selecting albums
+- Simplified resize script (no HEIC handling needed)
+
+Much simpler and cleaner! No more subdirectories or manual HEIC conversion.
+
+## [1.1.8.0-alpha-35] - 2025-12-04
+
+**CRITICAL FIX: Recursive Photo Scanning & HEIC Support** (REVERTED IN alpha-36)
+
+- Fixed photo counting to scan subdirectories recursively
+- Added HEIC support with pillow-heif
+- Added recursive file scanning throughout
+
+This version discovered that icloudpd was creating subdirectories, but alpha-36 fixes it properly!
+
 ## [1.1.8.0-alpha-34] - 2025-12-04
 
 **Album List & Sync Debugging Improvements**

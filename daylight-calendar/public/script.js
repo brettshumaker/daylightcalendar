@@ -4133,11 +4133,16 @@ async function listAlbums() {
 }
 
 // Make selectAlbum global so it can be called from inline onclick
-window.selectAlbum = function(albumName) {
+window.selectAlbum = async function(albumName) {
   document.getElementById('icloud-album-name').value = albumName;
   document.getElementById('icloud-albums-list').style.display = 'none';
-  // Auto-save the setting
-  saveiCloudSettings();
+  
+  showMessage('info', `Album "${albumName}" selected. Clearing old photos and syncing...`);
+  
+  // Auto-save the setting (which triggers sync if album changed)
+  await saveiCloudSettings();
+  
+  showMessage('success', `Sync started for "${albumName}" - check status in a minute!`);
 }
 
 // ============================================================================

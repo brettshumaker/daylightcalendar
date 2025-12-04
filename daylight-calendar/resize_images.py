@@ -61,8 +61,8 @@ def resize_directory(input_dir, output_dir, max_width, max_height, quality=85):
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
         
-        # Supported image extensions
-        image_extensions = {'.jpg', '.jpeg', '.png', '.heic', '.heif'}
+        # Supported image extensions (icloudpd converts to JPG for us)
+        image_extensions = {'.jpg', '.jpeg', '.png'}
         
         # Process each image
         for filename in os.listdir(input_dir):
@@ -76,7 +76,7 @@ def resize_directory(input_dir, output_dir, max_width, max_height, quality=85):
             if ext not in image_extensions:
                 continue
             
-            # Change extension to .jpg for output
+            # Keep JPG extension for output
             output_filename = Path(filename).stem + '.jpg'
             output_path = os.path.join(output_dir, output_filename)
             

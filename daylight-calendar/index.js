@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-34
+// Daylight Calendar v1.1.8.0-alpha-36
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
@@ -1294,11 +1294,36 @@ app.get('/api/icloud/settings', (req, res) => {
   });
 });
 
+// Helper function to clear all photos from directory
+const clearPhotosDirectory = () => {
+  try {
+    const files = fs.readdirSync(icloudPhotosDir);
+    let count = 0;
+    
+    for (const file of files) {
+      const filePath = path.join(icloudPhotosDir, file);
+      const stat = fs.statSync(filePath);
+      
+      if (stat.isFile()) {
+        fs.unlinkSync(filePath);
+        count++;
+      }
+    }
+    
+    console.log(`[INFO] Cleared ${count} photos from directory`);
+    return count;
+  } catch (error) {
+    console.error('[ERROR] Error clearing photos directory:', error);
+    throw error;
+  }
+};
+
 // POST update iCloud settings
-app.post('/api/icloud/settings', (req, res) => {
+app.post('/api/icloud/settings', async (req, res) => {
   const filePath = getDataPath('icloud-settings.json');
-  fs.readFile(filePath, 'utf8', (err, data) => {
+  fs.readFile(filePath, 'utf8', async (err, data) => {
     const settings = err ? {} : JSON.parse(data);
+    const albumChanged = settings.albumName !== req.body.albumName;
     
     // Update settings
     const updatedSettings = {
@@ -1309,8 +1334,59 @@ app.post('/api/icloud/settings', (req, res) => {
       sessionExpiry: settings.sessionExpiry
     };
     
-    writeDataFile('icloud-settings.json', updatedSettings, res, () => {
-      res.json({ success: true, message: 'Settings updated' });
+    writeDataFile('icloud-settings.json', updatedSettings, res, async () => {
+      // If album changed, clear photos and trigger sync
+      if (albumChanged && req.body.albumName) {
+        console.log(`[INFO] Album changed from "${settings.albumName}" to "${req.body.albumName}"`);
+        console.log('[INFO] Clearing existing photos and starting sync...');
+        
+        try {
+          // Clear existing photos
+          const clearedCount = clearPhotosDirectory();
+          console.log(`[INFO] Cleared ${clearedCount} existing photos`);
+          
+          // Trigger sync in background (don't wait for it)
+          setTimeout(async () => {
+            try {
+              console.log('[INFO] Starting background sync after album change...');
+              const result = await runPythonScript('icloud_sync.py', {
+                command: 'sync_photos',
+                apple_id: updatedSettings.appleId,
+                password: updatedSettings.password,
+                album_name: updatedSettings.albumName,
+                cookie_directory: icloudCookieDir,
+                output_directory: icloudPhotosDir
+              });
+              
+              if (result.success) {
+                console.log(`[INFO] Background sync completed: ${result.photo_count} photos`);
+                
+                // Resize if needed
+                if (updatedSettings.maxWidth && updatedSettings.maxHeight) {
+                  await runPythonScript('resize_images.py', {
+                    command: 'resize_directory',
+                    input_dir: icloudPhotosDir,
+                    output_dir: icloudPhotosDir,
+                    max_width: updatedSettings.maxWidth,
+                    max_height: updatedSettings.maxHeight,
+                    quality: 85
+                  });
+                }
+              }
+            } catch (err) {
+              console.error('[ERROR] Background sync failed:', err);
+            }
+          }, 100);
+        } catch (err) {
+          console.error('[ERROR] Error during album change sync:', err);
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        message: 'Settings updated' + (albumChanged ? ' and sync triggered' : ''),
+        syncTriggered: albumChanged
+      });
     });
   });
 });
@@ -1624,6 +1700,7 @@ app.get('/api/icloud/photos', (req, res) => {
         path: path.join(icloudPhotosDir, filename)
       }));
     
+    console.log(`[INFO] Found ${photos.length} photos for slideshow`);
     res.json(photos);
   } catch (error) {
     console.error('[ERROR] Error listing photos:', error);

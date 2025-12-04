@@ -11,17 +11,20 @@
 
 ### 1. Create Shared Album (iOS)
 
+**IMPORTANT:** You **MUST** create a **SHARED** album. Regular albums will not work with icloudpd!
+
 **On your iPhone or iPad:**
 
 1. Open the **Photos** app
 2. Tap **Albums** tab at the bottom
 3. Tap the **+** button (top left)
-4. Select **New Shared Album**
+4. Select **New Shared Album** ⚠️ (NOT "New Album")
 5. Name it: `Calendar Screensaver` (or your preferred name)
 6. Tap **Next**
-7. Add family members:
+7. **Add family members** (REQUIRED for shared album):
    - Tap **Invite**
    - Select contacts or enter email addresses
+   - You must invite at least one person for it to be a shared album
    - Tap **Create**
 8. Add photos to the album:
    - Open the shared album
@@ -29,7 +32,10 @@
    - Select photos to add
    - Tap **Done**
 
-**Note:** All invited family members can add photos to this shared album from their devices!
+**Note:** 
+- All invited family members can add photos to this shared album from their devices!
+- The album **MUST** be shared with at least one person to work with icloudpd
+- Regular (non-shared) albums will appear in the browse list but won't sync any photos
 
 ### 2. Configure Daylight Calendar
 
