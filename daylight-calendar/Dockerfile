@@ -14,7 +14,13 @@ RUN apk add --no-cache \
     xf86-video-fbdev \
     ttf-freefont \
     openbox \
-    chromium
+    chromium \
+    py3-pillow \
+    jpeg-dev \
+    zlib-dev
+
+# Install icloudpd for photo syncing
+RUN pip3 install --no-cache-dir icloudpd six pytz tzlocal
 
 # Copy S6 overlay and other rootfs items
 COPY rootfs /

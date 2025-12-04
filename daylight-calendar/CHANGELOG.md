@@ -1,5 +1,71 @@
 # Changelog
 
+## [1.1.8.0-alpha-21] - 2025-12-04
+
+**🎨 iCloud Photos Screensaver**
+
+Major new feature: Display photos from your iCloud shared albums as a beautiful screensaver when the display dims!
+
+### New Features
+- **iCloud Integration**
+  - Secure authentication with Apple ID and password
+  - Two-factor authentication (2FA) support
+  - Session management with ~60-day token lifespan
+  - Automatic session expiration warnings (7 days before expiry)
+
+- **Photo Syncing**
+  - Sync photos from iCloud shared albums
+  - Configurable sync frequency (1-24 hours)
+  - Background automatic syncing
+  - Manual sync button for immediate updates
+
+- **Storage Management**
+  - Configurable storage limits (100MB - 5GB, default: 500MB)
+  - Automatic cleanup of oldest photos when limit reached
+  - Real-time storage usage display with progress bar
+  - Photo count tracking
+
+- **Image Optimization**
+  - Configurable output resolution: 4K, 1080p (default), 720p, or Original
+  - Automatic image resizing to save storage space
+  - JPEG compression with quality optimization
+
+- **Screensaver Mode**
+  - Full-screen photo slideshow when display dims
+  - Smooth fade transitions between photos (2-second fade)
+  - 10-second display per photo
+  - Random shuffle of photos
+  - Clock display in corner showing time and date
+  - Tap anywhere to exit screensaver
+
+- **Settings UI**
+  - Complete settings panel in Settings tab
+  - Visual status indicators (Connected/Disconnected/Warning)
+  - Storage usage bar with visual warning when near limit
+  - Last sync timestamp with human-readable format
+  - One-click cache clearing
+  - 2FA modal for authentication
+
+### Technical Implementation
+- Added Python scripts for iCloud authentication and photo syncing
+- Integrated `icloudpd` for photo downloading
+- Added image resizing with Pillow
+- New API endpoints for iCloud management
+- Background sync scheduler
+- Session monitoring system
+
+### Dependencies Added
+- Python: `icloudpd`, `pyicloud`, `Pillow`, `py3-pillow`, `jpeg-dev`, `zlib-dev`
+- Node.js: `python-shell`, `sharp`
+
+### Files Added
+- `icloud_auth.py` - Authentication and session management
+- `icloud_sync.py` - Photo syncing logic
+- `resize_images.py` - Image optimization
+- `ICLOUD_SCREENSAVER.md` - Complete feature documentation
+
+See `ICLOUD_SCREENSAVER.md` for detailed setup instructions and usage guide.
+
 ## [1.1.7.2-alpha-20] - 2025-12-02
 
 - **Made reward points optional** - Chores can now have 0 reward points
