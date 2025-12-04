@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.8.0-alpha-29] - 2025-12-04
+
+**CRITICAL FIX: Python Module Installation**
+
+- Fixed pyicloud not being found by changing `pip3` to `python3 -m pip`
+- This ensures packages install to the correct Python environment
+- Added verification step to confirm pyicloud imports successfully during build
+- This was the root cause of authentication failures
+
 ## [1.1.8.0-alpha-28] - 2025-12-04
 
 **Enhanced Debugging**
