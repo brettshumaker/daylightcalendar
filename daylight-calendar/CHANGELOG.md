@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.8.0-alpha-25] - 2025-12-04
+
+**Dependency Fix**
+
+- Added explicit `pyicloud` installation to Dockerfile
+- Fixed ModuleNotFoundError for pyicloud module
+
 ## [1.1.8.0-alpha-24] - 2025-12-04
 
 **Runtime Fix**

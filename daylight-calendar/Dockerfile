@@ -1,5 +1,5 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.15
-ARG BUILD_VERSION=1.1.8.0-alpha-24
+ARG BUILD_VERSION=1.1.8.0-alpha-25
 FROM ${BUILD_FROM}
 
 # Install required packages
@@ -22,10 +22,10 @@ RUN apk add --no-cache \
     jpeg-dev \
     zlib-dev
 
-# Upgrade pip and install icloudpd for photo syncing
-# Upgrade pip first, then install icloudpd with ignore-installed to avoid distutils conflicts
+# Upgrade pip and install Python dependencies for iCloud photo syncing
+# Upgrade pip first, then install pyicloud and icloudpd
 RUN pip3 install --no-cache-dir --upgrade --ignore-installed pip && \
-    pip3 install --no-cache-dir 'icloudpd>=1.17.3' six pytz tzlocal
+    pip3 install --no-cache-dir pyicloud 'icloudpd>=1.17.3' six pytz tzlocal
 
 # Copy S6 overlay and other rootfs items
 COPY rootfs /

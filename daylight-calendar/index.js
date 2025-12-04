@@ -1,4 +1,4 @@
-// Daylight Calendar v1.1.8.0-alpha-24
+// Daylight Calendar v1.1.8.0-alpha-25
 // A beautiful fullscreen calendar display for Home Assistant
 // Copyright (c) 2024
 
