@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.8.0-alpha-31] - 2025-12-04
+
+**Enhanced Python Logging**
+
+- Added detailed logging around 2FA/2SA checks
+- Added try/catch around property access to catch any exceptions
+- Log result output before sending to stdout
+- Fixed exit code logic to not fail when 2FA is required
+- This will pinpoint exactly where the script is failing
+
 ## [1.1.8.0-alpha-30] - 2025-12-04
 
 **Added Debug Endpoint**

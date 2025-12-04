@@ -52,7 +52,16 @@ def authenticate(apple_id, password, cookie_directory):
         log("PyiCloudService initialized successfully")
         
         # Check if 2FA is required
-        if api.requires_2fa:
+        log("Checking if 2FA is required...")
+        try:
+            requires_2fa = api.requires_2fa
+            log(f"requires_2fa = {requires_2fa}")
+        except Exception as e:
+            log(f"Error checking requires_2fa: {e}")
+            requires_2fa = False
+        
+        if requires_2fa:
+            log("2FA is required, returning response")
             return {
                 "success": False,
                 "requires_2fa": True,
@@ -60,7 +69,16 @@ def authenticate(apple_id, password, cookie_directory):
             }
         
         # Check if 2SA (older 2-step) is required
-        if api.requires_2sa:
+        log("Checking if 2SA is required...")
+        try:
+            requires_2sa = api.requires_2sa
+            log(f"requires_2sa = {requires_2sa}")
+        except Exception as e:
+            log(f"Error checking requires_2sa: {e}")
+            requires_2sa = False
+        
+        if requires_2sa:
+            log("2SA is required, returning response")
             return {
                 "success": False,
                 "requires_2sa": True,
@@ -68,6 +86,7 @@ def authenticate(apple_id, password, cookie_directory):
             }
         
         # Authentication successful
+        log("Authentication successful, no 2FA/2SA required")
         return {
             "success": True,
             "requires_2fa": False,
@@ -188,8 +207,11 @@ if __name__ == "__main__":
             }
         
         # Output result as JSON
-        print(json.dumps(result))
-        sys.exit(0 if result.get("success", False) else 1)
+        log(f"Outputting result: {result}")
+        print(json.dumps(result), flush=True)
+        exit_code = 0 if result.get("success", False) or result.get("requires_2fa", False) or result.get("requires_2sa", False) else 1
+        log(f"Exiting with code {exit_code}")
+        sys.exit(exit_code)
     
     except Exception as e:
         # Catch any unhandled exceptions and return as JSON
